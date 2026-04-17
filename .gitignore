@@ -1,0 +1,6 @@
+node_modules
+storage
+.env
+env
+ats.paperonboard.in
+*.zip

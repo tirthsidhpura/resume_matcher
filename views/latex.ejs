@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LaTeX to PDF Generator</title>
+
+  <!-- Bootstrap -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8fafc, #e9eef7);
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+
+    .main-wrapper {
+      padding: 40px 0;
+    }
+
+    .page-card {
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .page-header {
+      background: #111827;
+      color: white;
+      padding: 24px 28px;
+    }
+
+    .page-header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .page-header p {
+      margin: 8px 0 0;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+
+    .form-section {
+      padding: 28px;
+      background: #ffffff;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .form-control,
+    .form-control:focus {
+      border-radius: 12px;
+      box-shadow: none;
+    }
+
+    textarea.form-control {
+      min-height: 500px;
+      resize: vertical;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .btn-custom-primary {
+      background: #111827;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 600;
+    }
+
+    .btn-custom-primary:hover {
+      background: #1f2937;
+    }
+
+    .btn-custom-secondary {
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-weight: 600;
+    }
+
+    .status-box {
+      display: none;
+      margin-top: 18px;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .status-info {
+      display: block;
+      background: #e8f1ff;
+      color: #0b57d0;
+    }
+
+    .status-success {
+      display: block;
+      background: #e9f9ee;
+      color: #137333;
+    }
+
+    .status-error {
+      display: block;
+      background: #fdecec;
+      color: #b3261e;
+    }
+
+    .small-note {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .page-header,
+      .form-section {
+        padding: 20px;
+      }
+
+      textarea.form-control {
+        min-height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container main-wrapper">
+    <div class="card page-card">
+      <div class="page-header">
+        <h1>LaTeX to PDF Generator</h1>
+        <p>Paste your LaTeX code, enter details, and download the PDF with a custom filename.</p>
+      </div>
+
+      <div class="form-section">
+        <form id="latexForm">
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label for="fullName" class="form-label">Your Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="fullName"
+                name="fullName"
+                placeholder="Enter your name"
+                value="Tirth Sidhpura"
+              />
+            </div>
+
+            <div class="col-md-4">
+              <label for="phoneNumber" class="form-label">Phone Number</label>
+              <input
+                type="text"
+                class="form-control"
+                id="phoneNumber"
+                name="phoneNumber"
+                placeholder="Enter phone number"
+                value="548-333-1911"
+              />
+            </div>
+
+            <div class="col-md-4">
+              <label for="companyName" class="form-label">Company Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="companyName"
+                name="companyName"
+                placeholder="Enter company name"
+              />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="latex" class="form-label">LaTeX Code</label>
+            <textarea
+              class="form-control"
+              id="latex"
+              name="latex"
+              placeholder="Paste your LaTeX code here..."
+            ></textarea>
+            <div class="small-note">
+              Downloaded file name format: <strong>Name_Phone_Company.pdf</strong>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-custom-primary text-white" id="generateBtn">
+              Generate PDF
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-custom-secondary" id="clearBtn">
+              Clear
+            </button>
+          </div>
+
+          <div id="statusBox" class="status-box"></div>
+        </form>
+      </div>
+      <hr class="my-4" />
+
+<div class="mb-3">
+  <label for="coverLetter" class="form-label">Cover Letter Text</label>
+  <textarea
+    class="form-control"
+    id="coverLetter"
+    name="coverLetter"
+    placeholder="Write or paste your cover letter here..."
+    style="min-height: 300px; font-family: Arial, sans-serif;"
+  ></textarea>
+  <div class="small-note">
+    Downloaded cover letter file name format:
+    <strong>Name_Phone_CL_Company.pdf</strong>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <button
+    type="button"
+    class="btn btn-outline-dark btn-custom-secondary"
+    id="generateCoverLetterBtn"
+  >
+    Generate Cover Letter PDF
+  </button>
+</div>
+    </div>
+  </div>
+
+  <script>
+    const latexForm = document.getElementById("latexForm");
+    const generateBtn = document.getElementById("generateBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const statusBox = document.getElementById("statusBox");
+
+    const fullNameInput = document.getElementById("fullName");
+    const phoneNumberInput = document.getElementById("phoneNumber");
+    const companyNameInput = document.getElementById("companyName");
+    const latexInput = document.getElementById("latex");
+
+    function showStatus(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = "status-box";
+
+      if (type === "info") {
+        statusBox.classList.add("status-info");
+      } else if (type === "success") {
+        statusBox.classList.add("status-success");
+      } else if (type === "error") {
+        statusBox.classList.add("status-error");
+      }
+    }
+
+    function hideStatus() {
+      statusBox.textContent = "";
+      statusBox.className = "status-box";
+    }
+
+    function sanitizeFilePart(value) {
+      return (value || "")
+        .trim()
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_-]/g, "");
+    }
+
+    function buildFileName() {
+      const fullName = sanitizeFilePart(fullNameInput.value) || "UnknownName";
+      const phoneNumber = sanitizeFilePart(phoneNumberInput.value) || "UnknownPhone";
+      const companyName = sanitizeFilePart(companyNameInput.value) || "UnknownCompany";
+
+      return `${fullName}_${phoneNumber}_${companyName}.pdf`;
+    }
+
+    latexForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const latex = latexInput.value.trim();
+        const fullName = sanitizeFilePart(fullNameInput.value) || "UnknownName";
+      const phoneNumber = sanitizeFilePart(phoneNumberInput.value) || "UnknownPhone";
+      const companyName = sanitizeFilePart(companyNameInput.value) || "UnknownCompany";
+
+      if (!latex) {
+        showStatus("Please enter LaTeX code first.", "error");
+        return;
+      }
+
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Generating...";
+      showStatus("Compiling LaTeX and preparing PDF...", "info");
+
+      try {
+        const response = await fetch("/api/pdf/generate-pdf", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+  latex,
+  fullName,
+  phoneNumber,
+  companyName
+})
+        });
+
+        if (!response.ok) {
+          let errorMessage = "Failed to generate PDF";
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          } catch (err) {}
+          throw new Error(errorMessage);
+        }
+
+        const blob = await response.blob();
+        const fileName = buildFileName();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        window.URL.revokeObjectURL(url);
+
+        showStatus(`PDF generated successfully as ${fileName}`, "success");
+      } catch (error) {
+        showStatus(error.message || "Something went wrong while generating the PDF.", "error");
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = "Generate PDF";
+      }
+    });
+
+    clearBtn.addEventListener("click", function () {
+      fullNameInput.value = "";
+      phoneNumberInput.value = "";
+      companyNameInput.value = "";
+      latexInput.value = "";
+      hideStatus();
+    });
+  </script>
+  <script>
+    const coverLetterInput = document.getElementById("coverLetter");
+const generateCoverLetterBtn = document.getElementById("generateCoverLetterBtn");
+function buildCoverLetterFileName() {
+  const fullName = sanitizeFilePart(fullNameInput.value) || "UnknownName";
+  const phoneNumber = sanitizeFilePart(phoneNumberInput.value) || "UnknownPhone";
+  const companyName = sanitizeFilePart(companyNameInput.value) || "UnknownCompany";
+
+  return `${fullName}_${phoneNumber}_CL_${companyName}.pdf`;
+}
+generateCoverLetterBtn.addEventListener("click", function () {
+  const coverLetterText = coverLetterInput.value.trim();
+
+  if (!coverLetterText) {
+    showStatus("Please enter cover letter text first.", "error");
+    return;
+  }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      unit: "pt",
+      format: "a4"
+    });
+
+    const margin = 40;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxWidth = pageWidth - margin * 2;
+    const lineHeight = 18;
+
+    const fullName = fullNameInput.value.trim();
+    const phoneNumber = phoneNumberInput.value.trim();
+    const companyName = companyNameInput.value.trim();
+
+    let y = margin;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    if (fullName) {
+      doc.text(fullName, margin, y);
+      y += 22;
+    }
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+
+    if (phoneNumber) {
+      doc.text(`Phone: ${phoneNumber}`, margin, y);
+      y += 18;
+    }
+
+    if (companyName) {
+      doc.text(`Company: ${companyName}`, margin, y);
+      y += 24;
+    } else {
+      y += 10;
+    }
+
+    const lines = doc.splitTextToSize(coverLetterText, maxWidth);
+
+    lines.forEach((line) => {
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    });
+
+    const fileName = buildCoverLetterFileName();
+    doc.save(fileName);
+
+    showStatus(`Cover letter PDF generated successfully as ${fileName}`, "success");
+  } catch (error) {
+    showStatus("Failed to generate cover letter PDF.", "error");
+  }
+});
+coverLetterInput.value = "";
+clearBtn.addEventListener("click", function () {
+  fullNameInput.value = "";
+  phoneNumberInput.value = "";
+  companyNameInput.value = "";
+  latexInput.value = "";
+  coverLetterInput.value = "";
+  hideStatus();
+});
+  </script>
+</body>
+</html>

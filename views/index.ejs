@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Analyzer Dashboard</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .container-custom {
+      max-width: 1700px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    .meta {
+      color: #6b7280;
+      font-size: 15px;
+    }
+
+    .meta-box {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #374151;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    }
+
+    .filter-bar .form-control,
+    .filter-bar .form-select {
+      min-width: 180px;
+    }
+
+    .table-wrapper {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      overflow: auto;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1700px;
+    }
+
+    th, td {
+      padding: 14px 12px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f9fafb;
+      color: #374151;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    tr:hover td {
+      background: #fcfcfd;
+    }
+
+    .source-badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 6px 10px;
+      border-radius: 999px;
+      text-transform: capitalize;
+    }
+
+    .status-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 6px 10px;
+      border-radius: 999px;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+
+    .status-pending {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .status-processing {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .status-completed {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .status-failed {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .job-title {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.4;
+      min-width: 220px;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .url-box,
+    .analysis-box,
+    .error-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      line-height: 1.5;
+    }
+
+    .url-box,
+    .analysis-box,
+    .error-box {
+      max-height: 180px;
+      overflow: auto;
+      min-width: 220px;
+    }
+
+    .error-box {
+      background: #fef2f2;
+      color: #991b1b;
+      border-color: #fecaca;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .desc-preview {
+      max-width: 320px;
+      line-height: 1.5;
+      color: #111827;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .action-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .copy-btn {
+      border: none;
+      background: #111827;
+      color: white;
+      padding: 7px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .copy-btn:hover {
+      opacity: 0.9;
+    }
+
+    .copy-btn.copied {
+      background: #047857;
+    }
+
+    .score {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .recommendation {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .good {
+      color: #047857;
+    }
+
+    .bad {
+      color: #b91c1c;
+    }
+
+    .chip-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .chip {
+      display: inline-block;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #374151;
+    }
+
+    .list {
+      margin: 6px 0 0;
+      padding-left: 18px;
+    }
+
+    .list li {
+      margin-bottom: 5px;
+      line-height: 1.5;
+    }
+
+    .empty {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 24px;
+      color: #6b7280;
+    }
+
+    .modal-description {
+      white-space: pre-wrap;
+      line-height: 1.7;
+      font-size: 15px;
+      color: #111827;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+      max-height: 430px;
+      overflow: auto;
+    }
+
+    .modal-meta {
+      font-size: 14px;
+      color: #4b5563;
+      margin-top: 4px;
+    }
+
+    .modal-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .open-link {
+      word-break: break-all;
+    }
+
+    .hidden-row {
+      display: none !important;
+    }
+
+    .modal-toggle-group .btn.active-view {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .prompt-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .filter-bar .form-control,
+      .filter-bar .form-select {
+        min-width: 100%;
+      }
+    }
+
+        .app-status-not_applied {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .app-status-applied {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .app-status-rejected {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .status-action-btn {
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .status-action-btn.not-applied-btn {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .status-action-btn.applied-btn {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-action-btn.rejected-btn {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-action-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-custom">
+    <div class="topbar">
+      <div>
+        <h1>Job Analyzer Dashboard</h1>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          <div class="meta-box">
+            Total Jobs: <strong id="totalJobsCount"><%= jobs?.length || 0 %></strong>
+          </div>
+          <div class="meta-box">
+            Visible Jobs: <strong id="visibleJobsCount"><%= jobs?.length || 0 %></strong>
+          </div>
+        </div>
+      </div>
+      <div>
+        <a class="btn btn-outline-dark btn-sm" href="/api/jobs" target="_blank">Open API JSON</a>
+      </div>
+    </div>
+
+    <% 
+      const uniqueSources = [...new Set((jobs || []).map(j => (j.source || "").trim()).filter(Boolean))];
+    %>
+
+    <div class="filter-bar">
+      <select id="statusFilter" class="form-select form-select-sm">
+        <option value="">All Status</option>
+        <option value="completed" selected>Completed</option>
+        <option value="processing">Processing</option>
+        <option value="pending">Pending</option>
+        <option value="failed">Failed</option>
+      </select>
+
+      <select id="sourceFilter" class="form-select form-select-sm">
+        <option value="">All Sources</option>
+        <% uniqueSources.forEach(src => { %>
+          <option value="<%= src.toLowerCase() %>"><%= src %></option>
+        <% }) %>
+      </select>
+
+      <input
+        type="number"
+        id="scoreFilter"
+        class="form-control form-control-sm"
+        placeholder="Min Match %"
+        value="7"
+        min="0"
+        max="100"
+      />
+
+      <input
+        type="text"
+        id="searchFilter"
+        class="form-control form-control-sm"
+        placeholder="Search title..."
+      />
+
+            <select id="applicationStatusFilter" class="form-select form-select-sm">
+        <option value="">All Application Status</option>
+        <option value="not_applied" selected>Not Applied</option>
+        <option value="applied">Applied</option>
+        <option value="rejected">Rejected</option>
+      </select>
+
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+        Clear Filters
+      </button>
+    </div>
+
+    <div id="noMatchingJobsMessage" class="empty" style="display:none; margin-bottom: 18px;">
+      No jobs match the selected filters.
+    </div>
+
+    <% if (!jobs || jobs.length === 0) { %>
+      <div class="empty">
+        No jobs found in database.
+      </div>
+    <% } else { %>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Source</th>
+              <th>Company Name</th>
+              <th>Status</th>
+              <th>Application Status</th>
+              <th>Title</th>
+              <th>Location</th>
+              <th>Captured At</th>
+              <th>Saved At</th>
+              <th>Job URL</th>
+              <th>Description</th>
+              <th>Analysis</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody id="jobsTableBody">
+            <% jobs.forEach((job, index) => { 
+              const score = job.analysis?.match_score ?? 0;
+              const shortDescription = job.description
+                ? (job.description.length > 50
+                    ? job.description.substring(0, 50) + "..."
+                    : job.description)
+                : "N/A";
+
+              const shortUrl = job.url
+                ? (job.url.length > 30
+                    ? job.url.substring(0, 30) + "..."
+                    : job.url)
+                : "N/A";
+            %>
+                          <tr
+                data-id="<%= job._id %>"
+                data-status="<%= (job.analysisStatus || 'pending').toLowerCase() %>"
+                data-application-status="<%= (job.applicationStatus || 'not_applied').toLowerCase() %>"
+                data-source="<%= (job.source || '').toLowerCase() %>"
+                data-score="<%= score %>"
+                data-title="<%= (job.title || '').toLowerCase() %>"
+              >
+                <td><strong><%= index + 1 %></strong></td>
+
+                <td>
+                  <span class="source-badge"><%= job.source || "Unknown Source" %></span>
+                </td>
+
+                <td>
+                  <span class="source-badge"><%= job.analysis?.company_name || "Unknown Company" %></span>
+                </td>
+
+                <td>
+                  <span class="status-badge status-<%= job.analysisStatus || 'pending' %>">
+                    <%= job.analysisStatus || "pending" %>
+                  </span>
+                </td>
+
+                                <td>
+                  <span class="status-badge app-status-badge app-status-<%= job.applicationStatus || 'not_applied' %>">
+                    <%= (job.applicationStatus || 'not_applied').replace('_', ' ') %>
+                  </span>
+
+                  <div class="action-group">
+                    <button
+                      type="button"
+                      class="status-action-btn not-applied-btn application-status-btn"
+                      data-job-id="<%= job._id %>"
+                      data-status="not_applied"
+                    >
+                      Not Applied
+                    </button>
+
+                    <button
+                      type="button"
+                      class="status-action-btn applied-btn application-status-btn"
+                      data-job-id="<%= job._id %>"
+                      data-status="applied"
+                    >
+                      Applied
+                    </button>
+
+                    <button
+                      type="button"
+                      class="status-action-btn rejected-btn application-status-btn"
+                      data-job-id="<%= job._id %>"
+                      data-status="rejected"
+                    >
+                      Rejected
+                    </button>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="job-title"><%= job.title || "Untitled Job" %></div>
+                </td>
+
+                <td><%= job.location || "N/A" %></td>
+
+                <td class="muted">
+                  <%= job.capturedAt ? new Date(job.capturedAt).toLocaleString() : "N/A" %>
+                </td>
+
+                <td class="muted">
+                  <%= job.createdAt ? new Date(job.createdAt).toLocaleString() : "N/A" %>
+                </td>
+
+                <td>
+                  <% if (job.url) { %>
+                    <div id="url-<%= index %>" class="url-box"><%= shortUrl %></div>
+                    <div class="action-group">
+                      <a
+                        class="btn btn-sm btn-outline-primary"
+                        href="<%= job.url %>"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open
+                      </a>
+                      <button
+                        class="copy-btn"
+                        type="button"
+                        onclick="copyPlainText('<%- JSON.stringify(job.url || '').slice(1, -1) %>', this, 'Copy URL')"
+                      >
+                        Copy URL
+                      </button>
+                    </div>
+                  <% } else { %>
+                    <span class="muted">N/A</span>
+                  <% } %>
+                </td>
+
+                <td>
+                  <div class="desc-preview"><%= shortDescription %></div>
+
+                  <div class="action-group">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-dark"
+                      data-bs-toggle="modal"
+                      data-bs-target="#jobModal"
+                      data-title="<%= job.title || 'Untitled Job' %>"
+                      data-company_name="<%= job.analysis?.company_name || 'Untitled Job Name' %>"
+                      data-source="<%= job.source || 'Unknown Source' %>"
+                      data-status="<%= job.analysisStatus || 'pending' %>"
+                      data-location="<%= job.location || 'N/A' %>"
+                      data-capturedat="<%= job.capturedAt ? new Date(job.capturedAt).toLocaleString() : 'N/A' %>"
+                      data-createdat="<%= job.createdAt ? new Date(job.createdAt).toLocaleString() : 'N/A' %>"
+                      data-url="<%= job.url || '' %>"
+                      data-description="<%= job.description || 'N/A' %>"
+                      data-summary="<%= job.analysis?.summary || 'No summary available' %>"
+                      data-missingkeywords='<%- JSON.stringify(job.analysis?.missing_keywords || []) %>'
+                      data-strongmatches='<%- JSON.stringify(job.analysis?.strong_matches || []) %>'
+                    >
+                      Expand
+                    </button>
+                  </div>
+                </td>
+
+                <td>
+                  <% if (job.analysisStatus === "completed") { %>
+                    <div class="analysis-box">
+                      <div class="score"><%= job.analysis?.match_score ?? "N/A" %>%</div>
+
+                      <div class="recommendation <%= job.analysis?.recommendation === 'GOOD TO APPLY' ? 'good' : 'bad' %>">
+                        <%= job.analysis?.recommendation || "N/A" %>
+                      </div>
+
+                      <div><strong>Summary:</strong> <%= job.analysis?.summary || "N/A" %></div>
+
+                      <div style="margin-top: 10px;"><strong>Resume Keywords:</strong></div>
+                      <div class="chip-wrap">
+                        <% if (job.analysis?.resume_keywords?.length) { %>
+                          <% job.analysis.resume_keywords.forEach(keyword => { %>
+                            <span class="chip"><%= keyword %></span>
+                          <% }) %>
+                        <% } else { %>
+                          <span class="muted">No data</span>
+                        <% } %>
+                      </div>
+
+                      <div style="margin-top: 10px;"><strong>Matched Keywords:</strong></div>
+                      <div class="chip-wrap">
+                        <% if (job.analysis?.matched_keywords?.length) { %>
+                          <% job.analysis.matched_keywords.forEach(keyword => { %>
+                            <span class="chip"><%= keyword %></span>
+                          <% }) %>
+                        <% } else { %>
+                          <span class="muted">No data</span>
+                        <% } %>
+                      </div>
+
+                      <div style="margin-top: 10px;"><strong>Missing Keywords:</strong></div>
+                      <div class="chip-wrap">
+                        <% if (job.analysis?.missing_keywords?.length) { %>
+                          <% job.analysis.missing_keywords.forEach(keyword => { %>
+                            <span class="chip"><%= keyword %></span>
+                          <% }) %>
+                        <% } else { %>
+                          <span class="muted">No data</span>
+                        <% } %>
+                      </div>
+
+                      <div style="margin-top: 10px;"><strong>Strong Matches:</strong></div>
+                      <% if (job.analysis?.strong_matches?.length) { %>
+                        <ul class="list">
+                          <% job.analysis.strong_matches.forEach(point => { %>
+                            <li><%= point %></li>
+                          <% }) %>
+                        </ul>
+                      <% } else { %>
+                        <div class="muted">No data</div>
+                      <% } %>
+
+                      <% if (job.analysis?.parse_error) { %>
+                        <div style="margin-top: 10px;"><strong>Raw Model Response:</strong></div>
+                        <div class="error-box"><%= job.analysis?.raw_response || "No raw response available" %></div>
+                      <% } %>
+                    </div>
+                  <% } else if (job.analysisStatus === "processing" || job.analysisStatus === "pending") { %>
+                    <div class="analysis-box muted">Analysis is in progress...</div>
+                  <% } else { %>
+                    <span class="muted">N/A</span>
+                  <% } %>
+                </td>
+
+                <td>
+                  <% if (job.analysisStatus === "failed") { %>
+                    <div class="error-box"><%= job.analysisError || "Unknown error" %></div>
+                  <% } else { %>
+                    <span class="muted">—</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="modal fade" id="jobModal" tabindex="-1" aria-labelledby="jobModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title mb-1" id="jobModalLabel">Job Details</h5>
+            <div class="modal-meta" id="modalJobMeta"></div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-4">
+            <div class="col-12 col-lg-5">
+              <div class="modal-section-title">Job Information</div>
+
+              <div class="mb-2"><strong>Source:</strong> <span id="modalSource"></span></div>
+              <div class="mb-2"><strong>Company Name:</strong> <span id="modalCompany_name"></span></div>
+              <div class="mb-2"><strong>Status:</strong> <span id="modalStatus"></span></div>
+              <div class="mb-2"><strong>Location:</strong> <span id="modalLocation"></span></div>
+              <div class="mb-2"><strong>Captured At:</strong> <span id="modalCapturedAt"></span></div>
+              <div class="mb-3"><strong>Saved At:</strong> <span id="modalCreatedAt"></span></div>
+
+              <div class="modal-section-title">Job URL</div>
+              <div id="modalUrlText" class="modal-description open-link mb-2">N/A</div>
+
+              <div class="d-flex flex-wrap gap-2">
+                <a
+                  id="modalOpenUrl"
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-outline-primary btn-sm"
+                >
+                  Open URL
+                </a>
+
+                <button
+                  id="modalCopyUrlBtn"
+                  type="button"
+                  class="btn btn-dark btn-sm"
+                >
+                  Copy URL
+                </button>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-7">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <div class="modal-section-title mb-0">Content</div>
+                <div class="d-flex flex-wrap gap-2 modal-toggle-group">
+                  <button
+                    id="showDescriptionBtn"
+                    type="button"
+                    class="btn btn-outline-dark btn-sm active-view"
+                  >
+                    Description
+                  </button>
+                  <button
+                    id="showSummaryBtn"
+                    type="button"
+                    class="btn btn-outline-dark btn-sm"
+                  >
+                    Summary
+                  </button>
+                  <button
+                    id="modalCopyContentBtn"
+                    type="button"
+                    class="btn btn-dark btn-sm"
+                  >
+                    Copy Description
+                  </button>
+                </div>
+              </div>
+
+              <div class="prompt-buttons">
+                <button id="copyResumeMakePromptBtn" type="button" class="btn btn-outline-dark btn-sm">
+                  Copy Resume Make Prompt
+                </button>
+                <button id="copyCreateCvPromptBtn" type="button" class="btn btn-outline-dark btn-sm">
+                  Copy Create CV Prompt
+                </button>
+                <button id="copyAnalyzeResumePromptBtn" type="button" class="btn btn-outline-dark btn-sm">
+                  Copy Analyze Resume Prompt
+                </button>
+                <button id="copyCoverLetterPromptBtn" type="button" class="btn btn-outline-dark btn-sm">
+                  Copy Cover Letter Prompt
+                </button>
+              </div>
+
+              <div id="modalContentTitle" class="modal-section-title mt-3">Full Job Description</div>
+              <div id="modalContentBox" class="modal-description">N/A</div>
+
+              <div class="mt-4">
+                <div class="modal-section-title">Missing Keywords</div>
+                <div id="modalMissingKeywords" class="chip-wrap"></div>
+              </div>
+
+              <div class="mt-4">
+                <div class="modal-section-title">Strong Matches</div>
+                <div id="modalStrongMatches"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    let currentModalJob = {
+      url: "",
+      description: "",
+      summary: "",
+      missingKeywords: [],
+      strongMatches: [],
+      activeView: "description",
+      title: "",
+      source: "",
+      location: "",
+      status: ""
+    };
+
+    function showCopied(button, originalText) {
+      const oldText = originalText || button.innerText;
+      button.innerText = "Copied!";
+      button.classList.add("copied");
+
+      setTimeout(() => {
+        button.innerText = oldText;
+        button.classList.remove("copied");
+      }, 1500);
+    }
+
+    async function copyPlainText(text, button, fallbackLabel) {
+      try {
+        await navigator.clipboard.writeText(text || "");
+        showCopied(button, fallbackLabel || button.innerText);
+      } catch (error) {
+        alert("Failed to copy");
+        console.error("Copy failed:", error);
+      }
+    }
+
+    function updateModalContentView(view) {
+      const contentBox = document.getElementById("modalContentBox");
+      const contentTitle = document.getElementById("modalContentTitle");
+      const copyBtn = document.getElementById("modalCopyContentBtn");
+      const descBtn = document.getElementById("showDescriptionBtn");
+      const summaryBtn = document.getElementById("showSummaryBtn");
+
+      currentModalJob.activeView = view;
+
+      if (view === "summary") {
+        contentTitle.innerText = "AI Summary";
+        contentBox.innerText = currentModalJob.summary || "No summary available";
+        copyBtn.innerText = "Copy Summary";
+        descBtn.classList.remove("active-view");
+        summaryBtn.classList.add("active-view");
+      } else {
+        contentTitle.innerText = "Full Job Description";
+        contentBox.innerText = currentModalJob.description || "N/A";
+        copyBtn.innerText = "Copy Description";
+        summaryBtn.classList.remove("active-view");
+        descBtn.classList.add("active-view");
+      }
+
+      copyBtn.classList.remove("copied");
+    }
+
+    function renderModalAnalysis() {
+      const missingKeywordsBox = document.getElementById("modalMissingKeywords");
+      const strongMatchesBox = document.getElementById("modalStrongMatches");
+
+      missingKeywordsBox.innerHTML = "";
+      strongMatchesBox.innerHTML = "";
+
+      if (currentModalJob.missingKeywords?.length) {
+        currentModalJob.missingKeywords.forEach((keyword) => {
+          const span = document.createElement("span");
+          span.className = "chip";
+          span.innerText = keyword;
+          missingKeywordsBox.appendChild(span);
+        });
+      } else {
+        missingKeywordsBox.innerHTML = '<span class="muted">No data</span>';
+      }
+
+      if (currentModalJob.strongMatches?.length) {
+        const ul = document.createElement("ul");
+        ul.className = "list";
+
+        currentModalJob.strongMatches.forEach((point) => {
+          const li = document.createElement("li");
+          li.innerText = point;
+          ul.appendChild(li);
+        });
+
+        strongMatchesBox.appendChild(ul);
+      } else {
+        strongMatchesBox.innerHTML = '<div class="muted">No data</div>';
+      }
+    }
+
+    function getResumeMakePrompt() {
+      return `You are an expert technical recruiter and resume writer who specializes in ATS optimization 
+(Greenhouse, Lever, Workday) and human recruiter readability.
+
+TASK:
+Generate a job-specific resume using LaTeX.
+
+STRICT CONSTRAINTS (DO NOT VIOLATE):
+- DO NOT change the LaTeX structure, layout, spacing, column setup, or section order.
+- DO NOT introduce tables, text boxes, TikZ, icons-as-text, or images containing text.
+- DO NOT invent experience, tools, metrics, or companies.
+- DO NOT use generic or motivational language.
+- DO NOT sound like AI. Write like a strong senior engineer describing real work.
+- Keep formatting clean, ATS-readable, and human-friendly.
+
+INPUTS YOU WILL RECEIVE:
+1. My current LaTeX resume (this defines the format — preserve it exactly)
+2. A job description (JD)
+3. what I did in erience solution in details
+4. list of project which I have built 
+
+OUTPUT REQUIREMENTS:
+- Modify ONLY the text content inside existing LaTeX commands.
+- Preserve all headings, spacing, bullet structure, and alignment.
+- Keep the same number of sections unless a section already exists.
+- Output valid LaTeX only. No explanations.
+
+CONTENT RULES (VERY IMPORTANT):
+1. MIRROR JD LANGUAGE EXACTLY  
+   - If the JD says “cross-functional collaboration”, use that exact phrase.
+   - Do not paraphrase JD keywords unless unavoidable.
+   - Ensure all major JD phrases appear naturally where they truthfully apply.
+
+2. FRONT-LOAD IMPACT  
+   - The strongest, most relevant achievement must be the FIRST bullet of each role.
+   - Recent roles are weighted more heavily than older ones.
+
+3. METRICS OVER VAGUENESS  
+   - Use specific, believable numbers (latency, scale, users, throughput, cost, time).
+   - Avoid rounded or generic claims like “significantly improved”.
+
+4. BULLET QUALITY  
+   - Every bullet starts with a strong action verb.
+   - One idea per bullet.
+   - No filler. No buzzword stacking.
+
+5. SKILLS SECTION  
+   - Include a dedicated Skills section if it exists.
+   - Comma-separated text only.
+   - No bars, ratings, or visual indicators.
+   - Ensure JD keywords appear here AND in experience bullets.
+
+6. DATES  
+   - Use MM/YYYY format consistently.
+   - No seasons, no words like “Present” unless already in the template.
+
+7. ATS OPTIMIZATION  
+   - Job title from the JD must appear within the first 100 words.
+   - Use standard section names only (Work Experience, Skills, Education).
+   - Natural keyword density — no stuffing.
+
+8. HUMAN READABILITY CHECK  
+   - The resume should sound natural when read aloud.
+   - No robotic repetition.
+   - No “responsible for” phrasing.
+
+9. PROFESSTINAL SUMMARY 
+   - Keep it concise (1–2 lines) and tailored to the target job role.
+   - Highlight core skills or strengths without buzzwords, clichés, or generic statements.
+10. IMPACT OVER TASKS
+   - Every point should show outcome or impact, not just actions.
+   - Prefer “resulted in / enabled / improved” over “worked on / helped with”.
+
+**very important**
+Any bullet points inside experience should not look generic at all it should be releated what I worked on and match with the JD
+
+FINAL CHECK BEFORE OUTPUT:
+- Does this resume clearly look written by a human with real experience?
+- Would a recruiter believe every bullet?
+- Would an ATS correctly parse every section?
+
+Now:
+1. Analyze the JD.
+2. Extract the most important keywords, skills, and responsibilities.
+3. Rewrite ONLY the content of my resume to best match this job.
+4. Output the final LaTeX resume.
+5. Highlight where necessary 
+6. experience section does not look generic at all 
+7. put relevant projects only from the project section
+
+WAIT for my LaTeX resume and JD.
+
+\\documentclass[10.5pt]{article}
+\\usepackage[a4paper,margin=0.3in]{geometry}
+\\usepackage{enumitem}
+\\usepackage[hidelinks]{hyperref}
+\\usepackage{titlesec}
+
+\\setlength{\\parindent}{0pt}
+\\pagenumbering{gobble}
+\\setlist[itemize]{noitemsep, topsep=2pt, leftmargin=*}
+
+\\titleformat{\\section}
+  {\\bfseries\\uppercase}
+  {}
+  {0pt}
+  {}
+  [\\titlerule]
+
+\\begin{document}
+
+\\begin{center}
+{\\Large \\textbf{Tirth Sidhpura}}\\\\
+Software Engineer\\\\
+Toronto, ON,Canada\\\\
+\\href{mailto:sidhpuratirth5126@gmail.com}{sidhpuratirth5126@gmail.com} - 548-333-1911\\\\
+\\href{https://github.com/tirthsidhpura}{github.com/tirthsidhpura} - 
+\\href{https://www.linkedin.com/in/tirth-sidhpura/}{linkedin.com/in/tirth-sidhpura} - 
+\\href{https://tirthsidhpura.github.io/portfolio/}{tirthsidhpura.github.io/portfolio}
+\\end{center}
+    
+\\section*{SUMMARY}
+Software engineer with 3 years of experience building scalable, production-grade backend and full stack systems. Strong in distributed systems, cloud infrastructure, and data-intensive applications. Proven ability to ship reliable features end-to-end and operate systems in production.
+
+\\section*{SKILLS}
+
+\\textbf{Languages} - JavaScript, TypeScript, Python, SQL \\\\
+\\textbf{Frontend} - ReactJS, EJS, HTML, CSS, Bootstrap \\\\
+\\textbf{Backend \\& Systems} - Node.js, Express.js, REST APIs, distributed systems, event-driven architecture \\\\
+\\textbf{Cloud \\& DevOps} - AWS (EC2, S3), Microsoft Azure, DigitalOcean, Docker, CI/CD pipelines \\\\
+\\textbf{Messaging \\& Streaming} - Apache Kafka, message queues, event processing \\\\
+\\textbf{Data \\& Analytics} - PostgreSQL, MySQL, data pipelines, performance tuning, Apache Superset \\\\
+\\textbf{Security} - JWT authentication, role-based access control (RBAC), data encryption \\\\
+\\textbf{Monitoring \\& Reliability} - Logging, error tracking, production debugging \\
+
+\\section*{EXPERIENCE}
+
+\\textbf{Software Engineer (Full Stack -- React \\& Backend)} \\\\
+Erience Solutions \\hfill Oct 2021 -- Oct 2024
+\\begin{itemize}
+\\item Built and owned a SEBI-compliant Structured Digital Database (SDD) platform over \\textbf{18+ months} to manage Unpublished Price Sensitive Information (UPSI) across \\textbf{thousands of organizations}, supporting concurrent multi-user access, append-only audit logs, and point-in-time reconstruction of access history for regulatory inspections.
+
+\\item Developed React-based frontend modules for compliance and KYC workflows within \\textbf{6 months}, implementing secure photo and document uploads, schema-driven data capture, and client-side validation aligned with \\textbf{SEBI audit accuracy and completeness requirements}.
+
+\\item Designed and evolved reusable React UI components across multiple releases for document preview, upload progress tracking, validation feedback, and role-based visibility, reducing KYC rework cycles and improving turnaround time for compliance and operations teams.
+
+\\item Implemented backend APIs to validate, store, and version KYC data and documents, enabling approval, rejection, and resubmission workflows with \\textbf{full historical traceability} and immutable records required for regulatory audits.
+
+\\item Architected a distributed backend system with service-level RBAC, append-only audit logging, and SEBI-aligned reporting workflows, ensuring \\textbf{continuous audit-readiness} and zero-loss traceability in production environments.
+
+\\item Built scalable ingestion and reconciliation pipelines to process \\textbf{high-volume daily financial records} from CDSL and NSDL, incorporating checksum-based data integrity checks, exception handling, and reconciliation reports to surface and resolve mismatches.
+
+\\item Automated Registrar and Transfer Agent (RTA) post-trade workflows and periodic regulatory report generation using scheduled backend jobs, significantly reducing manual operational effort and compliance turnaround times.
+
+\\item Collaborated closely with compliance and operations stakeholders to translate evolving SEBI regulations into end-to-end, production-ready platform features, balancing regulatory interpretation with system design constraints.
+
+\\item Owned production services by monitoring live ingestion and reconciliation pipelines, diagnosing batch failures and data inconsistencies, and deploying fixes in a \\textbf{Linux-based production environment} supporting compliance-critical systems.
+
+\\item Supported CI/CD pipelines and production deployments, ensuring platform stability, controlled releases, and uninterrupted audit-readiness of regulatory systems.
+\\end{itemize}
+
+\\section*{PROJECTS}
+
+\\textbf{RSI Trading \\& Automation Platform}\\href{https://github.com/tirthsidhpura/rsi-calculation-binance}{(GitHub Repository)}
+\\begin{itemize}
+\\item Built a multithreaded system to compute RSI indicators across 100+ trading pairs simultaneously.
+\\item Implemented automated trading strategies with stop-loss and take-profit logic using Binance APIs.
+\\item Processed real-time market data with low-latency execution and fault-tolerant order handling.
+\\end{itemize}
+
+\\textbf{PaperOnBoard.in}
+\\begin{itemize}
+\\item Built and scaled an educational platform serving over 10,000 daily users.
+\\item Developed backend services using PHP and SQL, managing production traffic and deployments.
+\\item Created and managed social media channels, driving consistent organic user growth.
+\\end{itemize}
+
+\\textbf{Hybrid Weather Data Engineering \\& Analytics Platform}
+\\href{https://github.com/tirthsidhpura/aqhi-dashboard}{(GitHub Repository)}
+\\begin{itemize}
+\\item Designed and implemented an end-to-end backend data pipeline ingesting real-time and historical data from multiple APIs.
+\\item Used Node.js and Apache Kafka to process asynchronous data streams reliably.
+\\item Stored and queried structured datasets using PostgreSQL and time-series techniques.
+\\end{itemize}
+
+\\section*{EDUCATION}
+
+\\textbf{Master of Computer Science} - Algoma University, Canada \\\\
+\\textbf{Fully open and willing to relocate anywhere in Canada as required.}
+
+\\end{document}
+
+Software Engineer – Erience Solutions (IT Company)
+Tech Stack: Node.js, React.js, Python, Django, FASTAPI, Express, MongoDB, PostgreSQL, REST APIs, JWT, 2FA, AI/ML
+
+Registrar & Transfer Agent (RTA) Management Software
+Designed and developed an end-to-end Registrar & Transfer Agent (RTA) platform from scratch, handling investor records, KYC verification, corporate actions, and regulatory compliance, serving multiple financial institutions.
+Built full-stack architecture (React.js frontend + Node.js backend), delivering 100% ownership of system design, development, deployment, and maintenance.
+Implemented role-based access control (RBAC) with User, Admin, and Super Admin panels, improving operational control and reducing unauthorized access incidents by ~70%.
+Integrated Two-Factor Authentication (2FA) across all user roles, strengthening security and meeting SEBI data confidentiality requirements.
+Developed secure KYC workflows including document upload, verification status tracking, and audit logs, reducing manual verification effort by ~60%.
+Automated PDF report generation (investor statements, compliance reports, transaction summaries), cutting report turnaround time from hours to under 1 minute.
+Built automated email notification systems for KYC updates, approvals, rejections, and investor communications, improving response time by ~40%.
+Designed and optimized investor data management modules supporting issuance & transfer of securities, dividend processing, corporate actions, and grievance handling.
+Ensured SEBI compliance by implementing time-stamped audit trails, immutable records, and data retention policies, reducing compliance risk significantly.
+Scaled the system to handle high-volume investor data with optimized APIs, improving performance by ~35% under peak load.
+
+AI-Based KYC Automation System
+Developed an AI-powered KYC verification engine to automatically validate identity documents (PAN, ID proofs, address proofs).
+Reduced manual KYC review workload by ~65% by integrating AI validation with human-review fallback.
+Improved KYC approval accuracy and consistency, reducing verification errors by ~40%.
+Integrated AI workflows seamlessly into existing Node.js and Python backend services.
+
+Structured Digital Database (SDD) Software – SEBI (PIT) Regulations, 2015
+Built a SEBI-compliant Structured Digital Database (SDD) to manage Unpublished Price Sensitive Information (UPSI) for 1,000+ companies.
+Designed a non-tamperable, internally hosted database with time-stamping and full audit trails, fully compliant with Regulation 3(5) of SEBI PIT Regulations.
+Implemented strict RBAC controls, ensuring only authorized Compliance Officers and designated personnel could access UPSI data.
+Developed secure logging of UPSI access, sharing history, PAN mapping, and justification records, enabling complete regulatory traceability.
+Ensured data immutability, preventing edits or deletions once records were created, reducing compliance risk by ~90%.
+Built admin dashboards and compliance reporting tools, simplifying SEBI inspections and internal audits.
+Engineered long-term data preservation mechanisms to support 8+ years of mandatory record retention.
+Improved compliance operations efficiency by ~50% compared to manual or spreadsheet-based tracking systems.
+
+In erience solution I use to do testing as well using Jest, PyTest
+We use Agile methodologies
+Key Achievements & Impact
+Delivered 2 enterprise-grade compliance platforms used by financial and listed entities across India.
+Reduced manual operational workload by 50–65% through automation and AI integration.
+Improved system security, auditability, and regulatory readiness, enabling clients to pass SEBI audits with zero critical observations.
+Trusted to build mission-critical financial compliance systems handling sensitive investor and insider-trading data.
+
+Projects
+
+Cryptocurrency Price Alert System(only high level overview not actual system) (https://github.com/tirthsidhpura/Crypto-Price-Alert-System)
+Created a system that connects to two exchange binance and kucoin via websocket and listen to the price of more than 300 pairs simultaneously through multiple child processes
+Created a separate process for the each alert are set by the user 
+Created a kafka setup where all this price is stream to the services which needed price of the particular service
+
+Vaultutre (Full Stack Web App) (https://tirthsidhpura.github.io/portfolio/vaulture-project.html)
+Built on typescript and nodejs, reactjs 
+1 User Creates Form
+2 Form is Published
+3 Responses Collected
+4 Email Notification Sent
+5 Admin Can Monitor Flags
+
+The platform allows users to create fully dynamic forms through an intuitive interface, making it easy to launch professional forms without technical complexity. Whether it is a simple feedback form or a more advanced structured workflow, Vaulture adapts seamlessly to different use cases.
+Vaulture includes a powerful super admin panel used by the head team of the application to monitor all forms created by users across the platform. If a form receives a high number of user flags or suspicious activity, the admin can review and deactivate it to maintain platform trust, quality, and safety.
+Custom subdomains for each user’s forms.
+Superadmin panel to manage subscription and report functions to see form and unpublished it automatically with email alerts
+When any user submit the form automated email goes to the form owner with response
+Hosted it in private server with cloudflare security
+
+RSI Trading & Automation Platform(https://github.com/tirthsidhpura/rsi-calculation-binance)
+• Built a multithreaded system to compute RSI indicators across 100+ trading pairs simultaneously.
+Used websockets to stream generated RSI
+• Implemented automated trading strategies with stop-loss and take-profit logic using Binance APIs.
+• Processed real-time market data with low-latency execution and fault-tolerant order handling.
+
+PaperOnBoard.in
+• Built and scaled an educational platform serving over 10,000 daily users.
+• Developed backend services using PHP and SQL, managing production traffic and deployments.
+• Created and managed social media channels, driving consistent organic user growth.
+
+Hybrid Weather Data Engineering & Analytics Platform (https://tirthsidhpura.github.io/portfolio/hybrid-weather-app-project.html)
+• Designed and implemented an end-to-end backend data pipeline ingesting real-time and historical data from multiple APIs.
+• Used Node.js and Apache Kafka to process asynchronous data streams reliably.
+• Stored and queried structured datasets using PostgreSQL and time-series techniques.
+
+Python for Data Processing & ETL Support
+https://github.com/tirthsidhpura/Python-Academic-Assignments
+• Implemented Python scripts for data manipulation, transformation, and basic ETL-style workflows.
+• Worked with structured datasets using SQL-style logic, control flows, and functions applicable to backend data processing
+tasks.
+• Demonstrates applied Python usage for backend services and data engineering support
+
+AI-Powered Dynamic Email Generation Platform (LLM-Based)
+• Designed and implemented a production feature generating dynamic, context-aware email content using structured inputs
+and stateful logic.
+• Built backend services to persist generated outputs and metadata in PostgreSQL for auditing, iteration, and long-term
+maintenance.
+• Integrated the feature into existing workflows, balancing correctness, performance, and usability.
+
+\\textbf{Solana Token Swap \\& Launch Tracker}
+https://solana-frontend-psi.vercel.app/
+\\begin{itemize}
+\\item Built a decentralized web application for swapping SPL tokens on the Solana blockchain.
+\\item Implemented real-time detection of newly launched Solana tokens by directly querying the Helius RPC, without relying on any third-party APIs.
+\\item Designed a responsive frontend and integrated on-chain data fetching to ensure fast, reliable, and trustless token discovery and swaps.
+\\end{itemize}
+
+GSM Based DC Motor control system
+Developed an IoT-based GSM DC Motor Control System using Arduino and embedded C, enabling remote control of motor speed through SMS commands via a GSM module. Implemented software logic to parse incoming GSM messages, process control commands, and adjust motor speed using PWM signals through a motor driver. The system also calculates and displays real-time RPM data on a 16×2 LCD. The project focused heavily on microcontroller programming, serial communication with the GSM module (AT commands), and real-time hardware–software integration for remote automation.
+
+AI based Gas Detection system
+Developed an AI-based Gas Detection System capable of identifying different odors such as perfume, deodorant, and other gases using gas sensors connected to a microcontroller. The system collects sensor data and applies machine learning techniques to classify different smell patterns. A software module processes real-time sensor readings, performs AI-based classification, and displays the detected gas type or triggers alerts when required. The project focuses on sensor data processing, pattern recognition, and embedded software integration for intelligent gas detection.
+
+Achievement
+Published paper on IEEE
+Manual vehicle-damage inspection is slow, subjective, and costly for insurance and fleet operations. We present a real-time method to detect and classify exterior vehicle damage using YOLOv13. In contrast to previous work, we employ a two-stage, data-centric pipeline to (i) automatically filter vehicle photos by viewpoint, retaining only informative front and rear images, and (ii) address class imbalance by collecting additional photos and applying augmentation. We curated and labeled a balanced dataset of 4,000 images across three categories (bumper, rear bumper, windshield). On a hold-out validation set, our model achieves an mAP@0.5 of 0.789 and an F1-score of 0.76, with approximately 23 ms per image inference time on GPU, providing a favorable speed–accuracy trade-off. These properties support a realistic approach to automating insurance claims and fleet vehicle inspections at scale.
+
+JOB DESCRIPTION:
+${currentModalJob.description || "Paste JD here"}`;
+    }
+
+    function getCreateCvPrompt() {
+      return `Create a professional CV for this job using the job description below.
+
+Rules:
+- Make it tailored to the job
+- Use strong ATS-friendly wording
+- Keep it human and believable
+- Focus on real engineering impact
+- Do not add fake experience
+- Keep skills and achievements relevant to the JD
+- Prefer measurable outcomes
+- Keep summary concise
+- Select only the most relevant projects
+
+I will paste my resume myself.
+
+JOB DESCRIPTION:
+${currentModalJob.description || "Paste JD here"}`;
+    }
+
+    function getAnalyzeResumePrompt() {
+      return `Act as a senior HR manager and ATS (Applicant Tracking System) reviewer with 15+ years of experience in technical hiring.
+
+Your task is to evaluate my resume against the provided job description exactly like a real recruiter and ATS system would.
+
+Follow this structured process strictly:
+
+1. ATS COMPATIBILITY SCORE
+Give an ATS match score out of 100 based on:
+- keyword matching
+- required skills
+- preferred skills
+- experience level
+- education
+
+2. SKILLS MATCH ANALYSIS
+Create a table with:
+Required Skill | Present in Resume (Yes/No) | Evidence in Resume | Recommendation
+
+3. MISSING KEYWORDS
+List the important keywords from the job description that are missing in the resume.
+
+4. EXPERIENCE GAP ANALYSIS
+Explain what parts of the job description my resume fails to demonstrate clearly.
+
+5. STRONG MATCH AREAS
+Highlight the parts of my resume that strongly match the role.
+
+6. WEAK AREAS
+Explain why a recruiter might reject this resume.
+
+7. EXACT IMPROVEMENTS
+Rewrite the specific bullet points in my resume to better match the job description.
+
+8. ATS OPTIMIZED SUMMARY
+Write a better professional summary tailored exactly for this job.
+
+9. FINAL HIRING PROBABILITY
+Estimate the chance of getting shortlisted (percentage) and explain why.
+
+10. IMPROVED RESUME SECTION
+Rewrite the most important sections of my resume to maximize ATS compatibility.
+
+Use clear HR-level reasoning, realistic recruiter expectations, and actionable suggestions.
+
+----------------------------------------------------
+
+JOB DESCRIPTION:
+${currentModalJob.description || "[Paste job description here]"}
+
+----------------------------------------------------
+
+MY RESUME:
+[Paste resume here]`;
+    }
+
+    function getCoverLetterPrompt() {
+      return `Write a short cover letter (80–120 words) for a job application.
+
+Make it sound natural like a real person wrote it quickly, not perfect or robotic.
+
+Rules:
+
+Use simple English
+
+Sometimes miss commas or small grammar rules
+
+Sentences can be slightly uneven
+
+Avoid very formal phrases like "I am writing to express my interest"
+
+It should still sound professional but casual
+
+Add small human imperfections (missing comma, slightly awkward sentence)
+
+Do not make big grammar mistakes, only small natural ones
+
+Structure:
+
+Short intro saying you saw the job and are interested
+
+One paragraph about your experience or skills
+
+very important:- Try to connect job description with projects or work like what is company doing and what I am doing similar
+
+Short closing asking for a chance to talk
+`;
+    }
+
+    const jobModal = document.getElementById("jobModal");
+
+    if (jobModal) {
+      jobModal.addEventListener("show.bs.modal", function (event) {
+        const button = event.relatedTarget;
+        if (!button) return;
+
+        const title = button.getAttribute("data-title") || "Job Details";
+        const source = button.getAttribute("data-source") || "Unknown Source";
+        const Company_name = button.getAttribute("data-company_name") || "Unknown Company";
+        const status = button.getAttribute("data-status") || "pending";
+        const location = button.getAttribute("data-location") || "N/A";
+        const capturedAt = button.getAttribute("data-capturedat") || "N/A";
+        const createdAt = button.getAttribute("data-createdat") || "N/A";
+        const url = button.getAttribute("data-url") || "";
+        const description = button.getAttribute("data-description") || "N/A";
+        const summary = button.getAttribute("data-summary") || "No summary available";
+
+        let missingKeywords = [];
+        let strongMatches = [];
+
+        try {
+          missingKeywords = JSON.parse(button.getAttribute("data-missingkeywords") || "[]");
+        } catch (e) {
+          missingKeywords = [];
+        }
+
+        try {
+          strongMatches = JSON.parse(button.getAttribute("data-strongmatches") || "[]");
+        } catch (e) {
+          strongMatches = [];
+        }
+
+        currentModalJob = {
+          title,
+          source,
+          status,
+          location,
+          url,
+          description,
+          summary,
+          missingKeywords,
+          strongMatches,
+          Company_name,
+          activeView: "description"
+        };
+
+        document.getElementById("jobModalLabel").innerText = title;
+        document.getElementById("modalJobMeta").innerText = `${source} • ${status}`;
+        document.getElementById("modalSource").innerText = source;
+        document.getElementById("modalCompany_name").innerText = Company_name;
+        document.getElementById("modalStatus").innerText = status;
+        document.getElementById("modalLocation").innerText = location;
+        document.getElementById("modalCapturedAt").innerText = capturedAt;
+        document.getElementById("modalCreatedAt").innerText = createdAt;
+
+        const modalUrlText = document.getElementById("modalUrlText");
+        const modalOpenUrl = document.getElementById("modalOpenUrl");
+
+        if (url) {
+          modalUrlText.innerText = url;
+          modalOpenUrl.href = url;
+          modalOpenUrl.classList.remove("disabled");
+          modalOpenUrl.setAttribute("aria-disabled", "false");
+        } else {
+          modalUrlText.innerText = "N/A";
+          modalOpenUrl.href = "#";
+          modalOpenUrl.classList.add("disabled");
+          modalOpenUrl.setAttribute("aria-disabled", "true");
+        }
+
+        const copyUrlBtn = document.getElementById("modalCopyUrlBtn");
+        copyUrlBtn.innerText = "Copy URL";
+        copyUrlBtn.classList.remove("copied");
+
+        updateModalContentView("description");
+        renderModalAnalysis();
+      });
+    }
+
+    document.getElementById("modalCopyUrlBtn").addEventListener("click", function () {
+      copyPlainText(currentModalJob.url || "", this, "Copy URL");
+    });
+
+    document.getElementById("modalCopyContentBtn").addEventListener("click", function () {
+      const textToCopy = currentModalJob.activeView === "summary"
+        ? (currentModalJob.summary || "No summary available")
+        : (currentModalJob.description || "N/A");
+
+      const label = currentModalJob.activeView === "summary"
+        ? "Copy Summary"
+        : "Copy Description";
+
+      copyPlainText(textToCopy, this, label);
+    });
+
+    document.getElementById("copyResumeMakePromptBtn").addEventListener("click", function () {
+      copyPlainText(getResumeMakePrompt(), this, "Copy Resume Make Prompt");
+    });
+
+    document.getElementById("copyCreateCvPromptBtn").addEventListener("click", function () {
+      copyPlainText(getCreateCvPrompt(), this, "Copy Create CV Prompt");
+    });
+
+    document.getElementById("copyAnalyzeResumePromptBtn").addEventListener("click", function () {
+      copyPlainText(getAnalyzeResumePrompt(), this, "Copy Analyze Resume Prompt");
+    });
+
+    document.getElementById("copyCoverLetterPromptBtn").addEventListener("click", function () {
+      copyPlainText(getCoverLetterPrompt(), this, "Copy Cover Letter Prompt");
+    });
+
+    document.getElementById("showDescriptionBtn").addEventListener("click", function () {
+      updateModalContentView("description");
+    });
+
+    document.getElementById("showSummaryBtn").addEventListener("click", function () {
+      updateModalContentView("summary");
+    });
+    const statusFilter = document.getElementById("statusFilter");
+    const applicationStatusFilter = document.getElementById("applicationStatusFilter");
+    const sourceFilter = document.getElementById("sourceFilter");
+    const scoreFilter = document.getElementById("scoreFilter");
+    const searchFilter = document.getElementById("searchFilter");
+
+    function applyFilters() {
+      const rows = document.querySelectorAll("#jobsTableBody tr");
+      const status = (statusFilter.value || "").toLowerCase();
+      const applicationStatus = (applicationStatusFilter.value || "").toLowerCase();
+      const source = (sourceFilter.value || "").toLowerCase();
+      const minScore = parseInt(scoreFilter.value || "0", 10) || 0;
+      const search = (searchFilter.value || "").toLowerCase().trim();
+
+      let visibleCount = 0;
+
+      rows.forEach((row) => {
+        const rowStatus = (row.dataset.status || "").toLowerCase();
+        const rowApplicationStatus = (row.dataset.applicationStatus || "").toLowerCase();
+        const rowSource = (row.dataset.source || "").toLowerCase();
+        const rowScore = parseInt(row.dataset.score || "0", 10) || 0;
+        const rowTitle = (row.dataset.title || "").toLowerCase();
+
+        let visible = true;
+
+        if (status && rowStatus !== status) visible = false;
+        if (applicationStatus && rowApplicationStatus !== applicationStatus) visible = false;
+        if (source && rowSource !== source) visible = false;
+        if (rowScore < minScore) visible = false;
+        if (search && !rowTitle.includes(search)) visible = false;
+
+        row.classList.toggle("hidden-row", !visible);
+
+        if (visible) visibleCount++;
+      });
+
+      const visibleJobsCount = document.getElementById("visibleJobsCount");
+      if (visibleJobsCount) {
+        visibleJobsCount.innerText = visibleCount;
+      }
+
+      const noMatchingJobsMessage = document.getElementById("noMatchingJobsMessage");
+      if (noMatchingJobsMessage) {
+        noMatchingJobsMessage.style.display = visibleCount === 0 ? "block" : "none";
+      }
+    }
+
+     function clearFilters() {
+      statusFilter.value = "";
+      applicationStatusFilter.value = "";
+      sourceFilter.value = "";
+      scoreFilter.value = "";
+      searchFilter.value = "";
+      applyFilters();
+    }
+    statusFilter.addEventListener("change", applyFilters);
+    applicationStatusFilter.addEventListener("change", applyFilters);
+    sourceFilter.addEventListener("change", applyFilters);
+    scoreFilter.addEventListener("input", applyFilters);
+    searchFilter.addEventListener("input", applyFilters);
+
+        async function updateApplicationStatus(jobId, applicationStatus) {
+      const response = await fetch(`/api/jobs/${jobId}/application-status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ applicationStatus })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update application status");
+      }
+
+      return data;
+    }
+
+    function formatApplicationStatus(status) {
+      if (!status) return "not applied";
+      return status.replace(/_/g, " ");
+    }
+
+    function getApplicationStatusBadgeClass(status) {
+      return `status-badge app-status-badge app-status-${status || "not_applied"}`;
+    }
+
+    document.addEventListener("click", async function (e) {
+      if (!e.target.classList.contains("application-status-btn")) return;
+
+      const button = e.target;
+      const jobId = button.getAttribute("data-job-id");
+      const newStatus = button.getAttribute("data-status");
+      const row = button.closest("tr");
+
+      if (!row || !jobId || !newStatus) return;
+
+      const buttons = row.querySelectorAll(".application-status-btn");
+      const badge = row.querySelector(".app-status-badge");
+
+      const originalText = button.innerText;
+
+      try {
+        buttons.forEach(btn => btn.disabled = true);
+        button.innerText = "Updating...";
+
+        const result = await updateApplicationStatus(jobId, newStatus);
+        const updatedStatus = result?.job?.applicationStatus || newStatus;
+
+        row.dataset.applicationStatus = updatedStatus;
+
+        if (badge) {
+          badge.className = getApplicationStatusBadgeClass(updatedStatus);
+          badge.innerText = formatApplicationStatus(updatedStatus);
+        }
+
+        applyFilters();
+      } catch (error) {
+        alert(error.message || "Failed to update application status");
+      } finally {
+        buttons.forEach(btn => btn.disabled = false);
+        button.innerText = originalText;
+      }
+    });
+  </script>
+</body>
+</html>
