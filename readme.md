@@ -115,6 +115,7 @@ Instead of blindly applying to jobs, users can:
 | Parsing  | PDF-Parse / Mammoth                    |
 | Database | MongoDB / MySQL                        |
 | AI/NLP   | TF-IDF / Keyword Matching / Embeddings |
+| Que   | REDIS / BULLMQ |
 
 ---
 
@@ -137,25 +138,7 @@ match_score = (matched_keywords / total_job_keywords) * 100;
 
 ## 📂 Project Structure
 
-```
-/project-root
-│── /scraper
-│   ├── linkedin.js
-│   ├── indeed.js
-│
-│── /parser
-│   ├── resumeParser.js
-│
-│── /matcher
-│   ├── matchEngine.js
-│
-│── /routes
-│── /views
-│── /public
-│── /config
-│── server.js
-│── package.json
-```
+
 
 ---
 
@@ -170,6 +153,12 @@ cd ats-resume-matcher
 
 ### 2️⃣ Install Dependencies
 
+
+
+```bash
+docker pull redis:latest
+docker run --name redis-server -p 6379:6379 -d redis:latest
+```
 ```bash
 npm install
 ```
