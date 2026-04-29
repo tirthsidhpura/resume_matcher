@@ -16,6 +16,27 @@ const analysisSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const jobResumeSchema = new mongoose.Schema(
+  {
+    summary: {
+      type: String,
+      default: "",
+    },
+    skills: {
+      type: [Object],
+      default: [],
+    },
+    experience: {
+      type: [Object],
+      default: [],
+    },
+    projects: {
+      type: [Object],
+      default: [],
+    },
+  },
+  { _id: false }
+);
 const jobSchema = new mongoose.Schema(
   {
     source: {
@@ -52,13 +73,23 @@ const jobSchema = new mongoose.Schema(
       type: analysisSchema,
       default: {}
     },
-
+    jobResume: {
+      type: jobResumeSchema,
+      default: {}
+    },
+    jobResumeStatus: {
+      type: String,
+      enum: ["pending", "processing", "completed", "failed"],
+      default: "pending",
+      index: true
+    },
     analysisStatus: {
       type: String,
       enum: ["pending", "processing", "completed", "failed"],
       default: "pending",
       index: true
     },
+    
     analysisError: {
       type: String,
       default: ""
@@ -72,6 +103,10 @@ const jobSchema = new mongoose.Schema(
       default: null
     },
     analyzedAt: {
+      type: Date,
+      default: null
+    },
+    jobResumecreatedAt: {
       type: Date,
       default: null
     },

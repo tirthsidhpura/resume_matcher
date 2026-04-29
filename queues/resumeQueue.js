@@ -1,4 +1,4 @@
-const { Queue } = require("bullmq");
+const { Queue, delay } = require("bullmq");
 const connection = require("../config/redis");
 
 const resumeQueue = new Queue("resume-analysis-queue", {
@@ -8,6 +8,7 @@ const resumeQueue = new Queue("resume-analysis-queue", {
 async function addResumeJob(jobData) {
   return await resumeQueue.add("analyze-resume", jobData, {
     attempts: 3,
+    delay: 10000,
     backoff: {
       type: "exponential",
       delay: 5000,

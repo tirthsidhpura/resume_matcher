@@ -6,7 +6,7 @@ const { addResumeJob } = require("../queues/resumeQueue");
 const { RESUME_PDF_PATH } = require("../config/aiConfig.js");
 
 async function claimNextJob() {
-  console.log("claim next job");
+  // console.log("claim next job");
 
   const jobs = await Job.find({
     analysisStatus: "pending",

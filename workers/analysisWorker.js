@@ -3,7 +3,8 @@ const { Worker } = require("bullmq");
 const connection = require("../config/redis");
 const { extractResumeTextFromPDF } = require("../services/pdfService");
 const { analyzeJobWithMistral } = require("../services/aiService");
-const Job = require ('../models/Job')
+const Job = require ('../models/Job');
+const wait = require("../utils/wait");
 async function processOneJob(job) {
   const resumeText = await extractResumeTextFromPDF(job.resumePath);
 
@@ -26,12 +27,16 @@ function workerLoop() {
       console.log("[bullmq job received]", bullJob.id);
 
       const job = bullJob.data;
-
+      await wait(5000);
       return await processOneJob(job);
     },
     {
       connection,
       concurrency: 1,
+      limiter: {
+        max: 1,
+        duration: 5000
+      }
     }
   );
 

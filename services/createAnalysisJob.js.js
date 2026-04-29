@@ -8,15 +8,16 @@ async function createAnalysisJob(data) {
     analysisStatus: "pending",
   });
 
-  await addResumeJob({
-    _id: job._id.toString(),
-    resumePath: job.resumePath,
-    description: job.description,
-  });
+//   await addResumeJob({
+//     _id: job._id.toString(),
+//     resumePath: job.resumePath,
+//     description: job.description,
+//   });
 
-  console.log("[job added to BullMQ]", job._id);
+//   console.log("[job added to BullMQ]", job._id);
 
-  return job;
+//   return job;
+
 }
 
 module.exports = createAnalysisJob;
