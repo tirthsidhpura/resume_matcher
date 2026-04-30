@@ -5,7 +5,10 @@ const { extractResumeTextFromPDF } = require("../services/pdfService");
 const { analyzeJobWithMistral } = require("../services/aiService");
 const Job = require ('../models/Job');
 const wait = require("../utils/wait");
+const { getDatafromMongodbforAIresume } = require("../services/aiResumeGenerateService");
+const { addCreateResumeJob } = require("../queues/resumeQueue");
 async function processOneJob(job) {
+  await wait(10000);
   const resumeText = await extractResumeTextFromPDF(job.resumePath);
 
   const analysis = await analyzeJobWithMistral(
@@ -13,7 +16,7 @@ async function processOneJob(job) {
     job.description
   );
 
-  console.log({analysis});
+  // console.log({analysis});
 
   return analysis;
 }
@@ -26,9 +29,20 @@ function workerLoop() {
     async (bullJob) => {
       console.log("[bullmq job received]", bullJob.id);
 
-      const job = bullJob.data;
-      await wait(5000);
-      return await processOneJob(job);
+      
+      await wait(5000)
+      if (bullJob.name == "generate-resume") {
+        // generate resume logic
+        console.log(`bullJob.name`, bullJob.name)
+        // console.log(`bullJob.data._id`, bullJob.data.mongoId);
+        return await getDatafromMongodbforAIresume(bullJob.data.mongoId)
+      }
+      else {
+        const job = bullJob.data;
+        return await processOneJob(job);
+
+      }
+
     },
     {
       connection,
@@ -42,9 +56,13 @@ function workerLoop() {
 
   worker.on("completed", async (job, result) => {
     console.log("[job completed]", job.id);
-    console.log(result);
-    console.log({job: job.data});
+    // console.log(result);
+    // console.log({job: job.data});
 
+    if (job.name == "generate-resume") {
+      console.log(`resume generated successfully`);
+    }
+    else {
       await Job.findByIdAndUpdate(job.data._id, {
       $set: {
         analysis: result,
@@ -54,6 +72,12 @@ function workerLoop() {
         lockedAt: null
       }
     });
+
+         await addCreateResumeJob({
+              _id: job.data._id,
+              mongoId: job.data._id
+            });
+    }
 
     console.log(`saved `, job.data._id)
   });

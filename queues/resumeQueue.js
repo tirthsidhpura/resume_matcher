@@ -18,7 +18,28 @@ async function addResumeJob(jobData) {
   });
 }
 
+async function addCreateResumeJob(jobData) {
+  // console.log(`genereate rssume`, jobData)
+  return await resumeQueue.add("generate-resume", jobData, {
+    attempts: 3,
+    delay: 10000,
+    priority: 5,
+    jobId: `3generate-resume-${jobData._id}`,
+    backoff: {
+      type: "exponential",
+      delay: 5000,
+    },
+    removeOnComplete: true,
+    removeOnFail: false,
+  });
+}
+
+
+
+
+
 module.exports = {
   resumeQueue,
   addResumeJob,
+  addCreateResumeJob
 };

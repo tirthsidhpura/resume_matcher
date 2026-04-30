@@ -63,6 +63,7 @@ app.use("/api/pdf", pdfRoutes);
 
 const workerLoop = require("./workers/analysisWorker");
 const {claimNextJob} = require("./services/jobService");
+const { createAiresume } = require("./services/aiResumeGenerateService");
 
 
 
@@ -72,6 +73,7 @@ app.listen(PORT, async () => {
     console.log("start")
     await workerLoop();
 
-    await claimNextJob();
+    // await claimNextJob();
+    await createAiresume();
   }
 });

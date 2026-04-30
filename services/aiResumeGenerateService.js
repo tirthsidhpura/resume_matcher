@@ -8,16 +8,9 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/job_analyzer";
+const { addCreateResumeJob } = require("../queues/resumeQueue");
+const wait = require("../utils/wait");
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => {
-    console.error("MongoDB connection error:", err.message);
-    process.exit(1);
-  });
 
 async function generateAIresume(jd) {
   try {
@@ -37,14 +30,15 @@ async function generateAIresume(jd) {
   }
 }
 
-async function getDatafromMongodbforAIresume() {
+async function getDatafromMongodbforAIresume(id) {
   try {
-    const job = await Job.findOne({
-      "analysis.match_score": { $gt: 80 },
-    });
+    // console.log({id})
+    await wait(10000)
+    const job = await Job.findById(id);
+    // console.log({job})
 
     const gResume = await generateAIresume(job.description);
-    console.log({ gResume });
+    // console.log({ gResume });
 
     console.log({job: job._id})
     await Job.findByIdAndUpdate(job._id, {
@@ -57,10 +51,60 @@ async function getDatafromMongodbforAIresume() {
     });
 
 
+    return {sucess: true, gResume};
+
   } catch (error) {
     console.log(`error getDatafromMongodbforAIresume()`, error);
   }
 }
+
+
+async function createAiresume() {
+  try {
+    const jobs = await Job.find({
+      "analysis.match_score": { $gt: 75 }
+    //   , jobResumeStatus: "processing"
+    });
+
+
+
+    
+    for (let i = 0; i < jobs.length; i++) {
+        
+        const job = jobs[i];
+        // console.log({job1: job._id})
+        // console.log({job2: job._id.toString()})
+        await addCreateResumeJob({
+              _id: job._id.toString(),
+              mongoId: job._id.toString(),
+              description: job.description,
+            });
+        
+    
+        // console.log("[job added to BullMQ]", job._id);
+      }
+
+      return jobs.length;
+
+    // const gResume = await generateAIresume(job.description);
+    // console.log({ gResume });
+
+    // console.log({job: job._id})
+    // await Job.findByIdAndUpdate(job._id, {
+    //   $set: {
+    //     jobResume: gResume,
+    //     jobResumeStatus: "completed",
+    //     analysisError: "",
+    //     jobResumecreatedAt: new Date(),
+    //   },
+    // });
+
+
+  } catch (error) {
+    console.log(`error getDatafromMongodbforAIresume()`, error);
+  }
+}
+
 
 
 function makeTempDir() {
@@ -104,6 +148,9 @@ async function generateLatexResume() {
 }
 
 
-(async () => {
-  await generateLatexResume();
-})();
+// (async () => {
+//   await generateLatexResume();
+// })();
+
+
+module.exports = {createAiresume, getDatafromMongodbforAIresume}

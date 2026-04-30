@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    container_name: node_app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+      - ./generated:/app/generated
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: mongo_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: redis_db
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  redis_data:
