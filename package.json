@@ -7,6 +7,8 @@
     "dev": "nodemon app.js"
   },
   "dependencies": {
+    "@bull-board/api": "^7.0.0",
+    "@bull-board/express": "^7.0.0",
     "agenda": "^6.2.4",
     "axios": "^1.13.6",
     "bullmq": "^5.76.2",

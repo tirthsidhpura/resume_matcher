@@ -177,7 +177,8 @@
                 class="form-control"
                 id="companyName"
                 name="companyName"
-                placeholder="Enter company name"
+                placeholder="Enter company name",
+                value="<%= data.analysis.company_name %>"
               />
             </div>
           </div>
@@ -189,7 +190,7 @@
               id="latex"
               name="latex"
               placeholder="Paste your LaTeX code here..."
-            ></textarea>
+            ><%= sampleLatex %></textarea>
             <div class="small-note">
               Downloaded file name format: <strong>Name_Phone_Company.pdf</strong>
             </div>

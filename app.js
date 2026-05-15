@@ -7,6 +7,13 @@ const fs = require("fs");
 const pdfParse = require("pdf-parse");
 const Job = require("./models/Job");
 const cors = require("cors")
+
+const { ExpressAdapter } = require("@bull-board/express");
+const { createBullBoard } = require("@bull-board/api");
+const { BullMQAdapter } = require("@bull-board/api/bullMQAdapter");
+
+const { resumeQueue } = require("./queues/resumeQueue");
+
 const pdfRoutes = require("./routes/pdfRoutes");
 const pageRoutes = require("./routes/pageRoutes");
 const mainRoutes = require("./routes/mainRoute");
@@ -60,6 +67,17 @@ app.use('/', mainRoutes)
 app.use("/page", pageRoutes);
 app.use("/api/pdf", pdfRoutes);
 
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath("/admin/queues");
+
+createBullBoard({
+  queues: [new BullMQAdapter(resumeQueue)],
+  serverAdapter,
+});
+
+app.use("/admin/queues", serverAdapter.getRouter());
+
+
 
 const workerLoop = require("./workers/analysisWorker");
 const {claimNextJob} = require("./services/jobService");
@@ -70,10 +88,10 @@ const { createAiresume } = require("./services/aiResumeGenerateService");
 app.listen(PORT, async () => {
   console.log(`Server running at http://localhost:${PORT}`);
    if(process.env.aistop == 'false') {
-    console.log("start")
+    console.log("AI Analysis will be start")
     await workerLoop();
 
-    // await claimNextJob();
-    await createAiresume();
+    await claimNextJob();
+    // await createAiresume();
   }
 });

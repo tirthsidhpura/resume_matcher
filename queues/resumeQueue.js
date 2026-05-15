@@ -9,6 +9,7 @@ async function addResumeJob(jobData) {
   return await resumeQueue.add("analyze-resume", jobData, {
     attempts: 3,
     delay: 10000,
+    priority: 3,
     backoff: {
       type: "exponential",
       delay: 5000,
@@ -22,8 +23,8 @@ async function addCreateResumeJob(jobData) {
   // console.log(`genereate rssume`, jobData)
   return await resumeQueue.add("generate-resume", jobData, {
     attempts: 3,
-    delay: 10000,
-    priority: 5,
+    // delay: 10000,
+    priority: 1,
     jobId: `3generate-resume-${jobData._id}`,
     backoff: {
       type: "exponential",

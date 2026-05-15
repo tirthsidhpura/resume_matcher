@@ -44,7 +44,7 @@ function cleanupTempDir(tempDir) {
 const generatePdf = async (req, res) => {
   const { latex, fullName, phoneNumber, companyName } = req.body;
 
-  console.log("req.body =>", req.body);
+  // console.log("req.body =>", req.body);
 
   if (!latex || typeof latex !== "string") {
     return res.status(400).json({

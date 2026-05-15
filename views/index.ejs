@@ -501,6 +501,7 @@
             %>
                           <tr
                 data-id="<%= job._id %>"
+                data-mainID="<%= job._id %>"
                 data-status="<%= (job.analysisStatus || 'pending').toLowerCase() %>"
                 data-application-status="<%= (job.applicationStatus || 'not_applied').toLowerCase() %>"
                 data-source="<%= (job.source || '').toLowerCase() %>"
@@ -606,6 +607,7 @@
                       class="btn btn-sm btn-outline-dark"
                       data-bs-toggle="modal"
                       data-bs-target="#jobModal"
+                      data-mainID="<%= job._id || 'Untitled Job' %>"
                       data-title="<%= job.title || 'Untitled Job' %>"
                       data-company_name="<%= job.analysis?.company_name || 'Untitled Job Name' %>"
                       data-source="<%= job.source || 'Unknown Source' %>"
@@ -727,6 +729,7 @@
               <div class="mb-2"><strong>Status:</strong> <span id="modalStatus"></span></div>
               <div class="mb-2"><strong>Location:</strong> <span id="modalLocation"></span></div>
               <div class="mb-2"><strong>Captured At:</strong> <span id="modalCapturedAt"></span></div>
+              <div class="mb-2"><strong><button><a target="_blank" id="generateLink">Generate Resume </a></button></strong> <span id="modalSource"></span></div>
               <div class="mb-3"><strong>Saved At:</strong> <span id="modalCreatedAt"></span></div>
 
               <div class="modal-section-title">Job URL</div>
@@ -1337,6 +1340,7 @@ Short closing asking for a chance to talk
         const button = event.relatedTarget;
         if (!button) return;
 
+        const id = button.getAttribute("data-mainID") || "No ID";
         const title = button.getAttribute("data-title") || "Job Details";
         const source = button.getAttribute("data-source") || "Unknown Source";
         const Company_name = button.getAttribute("data-company_name") || "Unknown Company";
@@ -1374,9 +1378,12 @@ Short closing asking for a chance to talk
           missingKeywords,
           strongMatches,
           Company_name,
-          activeView: "description"
+          activeView: "description",
+          id
         };
-
+        // alert (id)
+        document.getElementById("generateLink").href = `http://localhost:3000/generate/resume/${id}`;
+        // document.getElementById("jobModalID").innerText = title;
         document.getElementById("jobModalLabel").innerText = title;
         document.getElementById("modalJobMeta").innerText = `${source} • ${status}`;
         document.getElementById("modalSource").innerText = source;

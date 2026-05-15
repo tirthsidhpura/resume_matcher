@@ -1,7 +1,7 @@
 require('dotenv').config()
 
 module.exports ={
-  APPLY_THRESHOLD: 70,
+  APPLY_THRESHOLD: process.env.APPLY_THRESHOLD,
   RETRY_DELAY_MS: 30000,
   LOCK_TIMEOUT_MS: 5 * 60 * 1000,
   MAX_RETRY_WINDOW_HOURS: 24,

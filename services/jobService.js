@@ -6,10 +6,12 @@ const { addResumeJob } = require("../queues/resumeQueue");
 const { RESUME_PDF_PATH } = require("../config/aiConfig.js");
 
 async function claimNextJob() {
-  // console.log("claim next job");
+  console.log("claim next job");
+const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
   const jobs = await Job.find({
     analysisStatus: "pending",
+    createdAt: { $gte: last24Hours },
   });
 
   for (let i = 0; i < jobs.length; i++) {

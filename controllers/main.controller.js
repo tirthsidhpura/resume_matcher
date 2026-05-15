@@ -1,6 +1,7 @@
 
 
 const Job = require("../models/Job");
+const { generateResumeLatex } = require("../services/latexService");
 const { normalizeUrl } = require("../utils/urlUtils");
 const workerLoop = require("../workers/analysisWorker");
 
@@ -27,7 +28,7 @@ exports.getMain = async (req, res) => {
     
         const jobs = await Job.find(filter).sort({ createdAt: -1 });
     
-        res.render("index2", { jobs });
+        res.render("index", { jobs });
       } catch (error) {
         res.status(500).send("Failed to load dashboard");
       }
@@ -37,12 +38,30 @@ exports.getMain = async (req, res) => {
 
 exports.getapijobs = async (req, res) => {
     try {
-    const jobs = await Job.find().sort({ createdAt: -1 });
+
+       const { date } = req.query; // e.g. ?date=23032026
+    
+        let filter = {};
+    
+        if (date) {
+          const day = date.substring(0, 2);
+          const month = date.substring(2, 4);
+          const year = date.substring(4, 8);
+    
+          const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+          const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
+    
+          filter.createdAt = {
+            $gte: startDate,
+            $lte: endDate,
+          };
+        }
+    
+        const jobs = await Job.find(filter).sort({ createdAt: -1 });
 
     res.json({
       success: true,
       count: jobs.length,
-      workerRunning,
       data: jobs
     });
   } catch (error) {
@@ -93,11 +112,11 @@ exports.postJobs = async (req, res) => {
       const normalizedUrl = normalizeUrl(url);
     // fast duplicate check before insert
     if (url && url.trim()) {
-      console.log(`url`, url)
+      // console.log(`url`, url)
 
       const existingJob = await Job.findOne({ url: normalizedUrl });
       if (existingJob) {
-        console.log(`Duplicate job already exists. Not stored and AI not triggered.`, existingJob)
+        // console.log(`Duplicate job already exists. Not stored and AI not triggered.`, existingJob)
         return res.status(200).json({
           success: true,
           duplicate: true,
@@ -142,7 +161,7 @@ exports.postJobs = async (req, res) => {
     }
 
     if(process.env.aistop == 'false') {
-    console.log("start")
+    // console.log("start")
     await workerLoop();
   }
     // workerLoop();
@@ -232,6 +251,34 @@ exports.getspecificJob = async (req, res) => {
   }
 }
 
+exports.getspecificJobforResumeGen = async (req, res) => {
+     try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found"
+      });
+    }
+
+    // console.log({j: job.jobResume})
+    const latex = await generateResumeLatex(job.jobResume);
+    // console.log({latex})
+    return res.render("latex",{
+      success: true,
+      data: job,
+      sampleLatex: latex
+    });
+  } catch (error) {
+    console.log({error})
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
 
 
 
@@ -253,7 +300,7 @@ exports.getMainPendingJobs = async (req, res) => {
     // Start and end of the given day
     const startDate = new Date(`${date}T00:00:00.000Z`);
     const endDate = new Date(`${date}T23:59:59.999Z`);
-    console.log({startDate, endDate})
+    // console.log({startDate, endDate})
     const query = {
       analysisStatus: { $ne: "completed" },
       [dateField]: {
@@ -270,7 +317,7 @@ exports.getMainPendingJobs = async (req, res) => {
 
 
 
-    console.log({data})
+    // console.log({data})
     return res.json({
       success: true,
       count: data.length,

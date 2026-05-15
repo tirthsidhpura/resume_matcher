@@ -33,7 +33,7 @@ async function fetchJobsFromAppsScript() {
   }
 
   const data = await response.json();
-  console.log({ response: data[0] })
+  // console.log({ response: data[0] })
 
   // Expected formats:
   // 1. Array directly: [{ job_description: "...", company: "...", role: "..." }]
@@ -124,7 +124,7 @@ async function analyzeJob(resumeText, jobDescription) {
 async function main() {
   try {
     const jobs = await fetchJobsFromAppsScript();
-    console.log(`Fetched ${jobs.length} jobs from sheet\n`);
+    // console.log(`Fetched ${jobs.length} jobs from sheet\n`);
 
     const finalResults = [];
 
@@ -137,7 +137,7 @@ async function main() {
         continue;
       }
 
-      console.log(`Analyzing row ${i + 1}...`);
+      // console.log(`Analyzing row ${i + 1}...`);
 
       const analysis = await analyzeJob(RESUME_TEXT, jd);
 
@@ -154,13 +154,13 @@ async function main() {
       const score = analysis.match_score ?? "N/A";
       const recommendation = analysis.recommendation ?? "UNKNOWN";
 
-      console.log(`Row ${i + 1} complete -> Score: ${score}, Recommendation: ${recommendation}\n`);
+      // console.log(`Row ${i + 1} complete -> Score: ${score}, Recommendation: ${recommendation}\n`);
     }
 
     const outputPath = path.join(__dirname, "job_match_results.json");
     fs.writeFileSync(outputPath, JSON.stringify(finalResults, null, 2), "utf8");
 
-    console.log(`Done. Results saved to: ${outputPath}`);
+    // console.log(`Done. Results saved to: ${outputPath}`);
 
     const goodToApply = finalResults.filter(
       (item) =>
@@ -169,7 +169,7 @@ async function main() {
         item.analysis.match_score >= APPLY_THRESHOLD
     );
 
-    console.log(`\nGood to apply jobs: ${goodToApply.length}`);
+    // console.log(`\nGood to apply jobs: ${goodToApply.length}`);
   } catch (error) {
     console.log({error})
     console.error("Error:", error.message);

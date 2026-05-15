@@ -15,10 +15,7 @@ const wait = require("../utils/wait");
 async function generateAIresume(jd) {
   try {
     const prompt = await buildPromptforResume(jd);
-    // console.log(prompt);
-
     const generateResume = await generateJobResumeWithAI(prompt);
-    // console.log({generateResume});
 
     if (generateResume.success == true) {
       return generateResume.data;
@@ -32,13 +29,12 @@ async function generateAIresume(jd) {
 
 async function getDatafromMongodbforAIresume(id) {
   try {
-    // console.log({id})
+
     await wait(10000)
     const job = await Job.findById(id);
-    // console.log({job})
 
     const gResume = await generateAIresume(job.description);
-    // console.log({ gResume });
+
 
     console.log({job: job._id})
     await Job.findByIdAndUpdate(job._id, {
@@ -72,32 +68,18 @@ async function createAiresume() {
     for (let i = 0; i < jobs.length; i++) {
         
         const job = jobs[i];
-        // console.log({job1: job._id})
-        // console.log({job2: job._id.toString()})
+
         await addCreateResumeJob({
               _id: job._id.toString(),
               mongoId: job._id.toString(),
               description: job.description,
             });
         
-    
-        // console.log("[job added to BullMQ]", job._id);
       }
 
       return jobs.length;
 
-    // const gResume = await generateAIresume(job.description);
-    // console.log({ gResume });
 
-    // console.log({job: job._id})
-    // await Job.findByIdAndUpdate(job._id, {
-    //   $set: {
-    //     jobResume: gResume,
-    //     jobResumeStatus: "completed",
-    //     analysisError: "",
-    //     jobResumecreatedAt: new Date(),
-    //   },
-    // });
 
 
   } catch (error) {
@@ -148,9 +130,6 @@ async function generateLatexResume() {
 }
 
 
-// (async () => {
-//   await generateLatexResume();
-// })();
 
 
 module.exports = {createAiresume, getDatafromMongodbforAIresume}

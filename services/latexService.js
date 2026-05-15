@@ -19,6 +19,7 @@ function formatLink(url) {
 }
 
 function generateResumeLatex(jobResume, personalInfo = {}) {
+    // console.log(`came`)
   const {
     name = "Tirth Sidhpura",
     title = "Full Stack Developer",

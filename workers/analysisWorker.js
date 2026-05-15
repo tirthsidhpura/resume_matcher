@@ -7,6 +7,7 @@ const Job = require ('../models/Job');
 const wait = require("../utils/wait");
 const { getDatafromMongodbforAIresume } = require("../services/aiResumeGenerateService");
 const { addCreateResumeJob } = require("../queues/resumeQueue");
+const { APPLY_THRESHOLD } = require("../config/aiConfig");
 async function processOneJob(job) {
   await wait(10000);
   const resumeText = await extractResumeTextFromPDF(job.resumePath);
@@ -73,10 +74,19 @@ function workerLoop() {
       }
     });
 
-         await addCreateResumeJob({
-              _id: job.data._id,
-              mongoId: job.data._id
-            });
+
+    if(result.match_score > APPLY_THRESHOLD) {
+
+      console.log({mongodbIdforgeneratignresume: job.data._id})
+      await addCreateResumeJob({
+           _id: job.data._id,
+           mongoId: job.data._id
+         });
+
+        
+
+    }
+
     }
 
     console.log(`saved `, job.data._id)
@@ -88,5 +98,16 @@ function workerLoop() {
 
   return worker;
 }
+
+
+/*
+(async () => {
+  console.log(`Only for testing line 105 worker,js`)
+    await addCreateResumeJob({
+           _id: "6a04640775a75b0530e40fac",
+           mongoId: "6a04640775a75b0530e40fac"
+         });
+})()
+// */
 
 module.exports = workerLoop;
