@@ -11,7 +11,6 @@ const { RESUME_PDF_PATH } = require("../config/aiConfig.js");
 async function extractResumeTextFromPDF() {
   const absolutePath = path.resolve(RESUME_PDF_PATH);
 
-  // console.log({absolutePath})
 
   if (!fs.existsSync(absolutePath)) {
     throw new Error(`Resume PDF not found at: ${absolutePath}`);

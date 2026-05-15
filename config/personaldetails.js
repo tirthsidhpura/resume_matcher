@@ -13,7 +13,7 @@ module.exports = {
     dataRelocation : "Fully open and willing to relocate anywhere in Canada as required.",
     dataResume : `
 
-Software Engineer – Erience Solutions (IT Company)
+Software Engineer – Erience Solutions (IT Company) Oct 2021 - Oct 2024
 Tech Stack: Node.js, React.js, Python, Django, FASTAPI, Express, MongoDB, PostgreSQL, REST APIs, JWT, 2FA, AI/ML
 
 Registrar & Transfer Agent (RTA) Management Software

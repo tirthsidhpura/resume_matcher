@@ -11,13 +11,11 @@ const { APPLY_THRESHOLD } = require("../config/aiConfig");
 async function processOneJob(job) {
   await wait(10000);
   const resumeText = await extractResumeTextFromPDF(job.resumePath);
-
   const analysis = await analyzeJobWithMistral(
     resumeText,
     job.description
   );
 
-  // console.log({analysis});
 
   return analysis;
 }

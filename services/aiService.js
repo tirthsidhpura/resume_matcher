@@ -4,7 +4,9 @@ const { safeParseModelJson, validateResumeJson, safeParseModelJsonforResume, par
 
 
 async function callAnApi(prompt) {
-
+  try {
+    
+  
    const response = await fetch(OLLAMA_URL, {
     method: "POST",
     headers: {
@@ -24,6 +26,9 @@ async function callAnApi(prompt) {
 
   const result = await response.json();
   return result.choices[0].message.content;
+  } catch (error) {
+   console.log({error}) 
+  }
 }
 
 
@@ -31,7 +36,6 @@ async function analyzeJobWithMistral(resumeText, jobDescription) {
   const prompt = buildPrompt(resumeText, jobDescription);
   const content = await callAnApi(prompt);
   const parsed = safeParseModelJson(content);
-
   if (!parsed.success) {
     throw new Error("Invalid JSON from model");
   }
