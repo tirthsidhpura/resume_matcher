@@ -1,5 +1,5 @@
 const connection = {
-  host: "127.0.0.1",
+  host: "redis_db",
   port: 6379,
 };
 

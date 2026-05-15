@@ -1,3 +1,5 @@
+const { dataName, dataTitle, dataLocation, dataEmail, dataPhone, dataGithub, dataLinkedin, dataPortfolio, dataEducation } = require("../config/personaldetails");
+
 function escapeLatex(value = "") {
   return String(value)
     .replace(/\\/g, "\\textbackslash{}")
@@ -21,15 +23,15 @@ function formatLink(url) {
 function generateResumeLatex(jobResume, personalInfo = {}) {
     // console.log(`came`)
   const {
-    name = "Tirth Sidhpura",
-    title = "Full Stack Developer",
-    location = "Toronto, ON, Canada",
-    email = "sidhpuratirth5126@gmail.com",
-    phone = "548-333-1911",
-    github = "https://github.com/tirthsidhpura",
-    linkedin = "https://www.linkedin.com/in/tirth-sidhpura/",
-    portfolio = "https://tirthsidhpura.github.io/portfolio/",
-    education = "Master of Computer Science - Algoma University, Canada",
+    name = dataName,
+    title = dataTitle,
+    location = dataLocation,
+    email = dataEmail,
+    phone = dataPhone,
+    github = dataGithub,
+    linkedin = dataLinkedin,
+    portfolio = dataPortfolio,
+    education = dataEducation,
     relocation = "Fully open and willing to relocate anywhere in Canada as required."
   } = personalInfo;
 
