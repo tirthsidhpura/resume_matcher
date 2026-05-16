@@ -61,8 +61,43 @@ function compileLatex(texFileName, workingDir) {
 }
 */
 
+function cleanLatexCache(texFileName, workingDir) {
+  const baseName = path.basename(texFileName, ".tex");
+
+  const extensionsToDelete = [
+    ".aux",
+    ".log",
+    ".out",
+    ".toc",
+    ".lof",
+    ".lot",
+    ".fls",
+    ".fdb_latexmk",
+    ".synctex.gz",
+    ".bbl",
+    ".blg",
+    ".idx",
+    ".ilg",
+    ".ind",
+  ];
+
+  for (const ext of extensionsToDelete) {
+    const filePath = path.join(workingDir, baseName + ext);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+}
+
 function compileLatex(texFileName, workingDir) {
   return new Promise((resolve, reject) => {
+    try {
+      cleanLatexCache(texFileName, workingDir);
+    } catch (err) {
+      return reject(new Error(`Failed to clean LaTeX cache: ${err.message}`));
+    }
+
     execFile(
       "pdflatex",
       [
@@ -90,7 +125,11 @@ function compileLatex(texFileName, workingDir) {
 
         if (!fs.existsSync(pdfPath)) {
           return reject(
-            new Error(["PDF was not generated.", stdout, stderr].filter(Boolean).join("\n"))
+            new Error(
+              ["PDF was not generated.", stdout, stderr]
+                .filter(Boolean)
+                .join("\n")
+            )
           );
         }
 
