@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      width: 260px;
+      padding: 16px;
+      margin: 0;
+      background: #1a1a1a;
+      color: #e5e5e5;
+    }
+    h2 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #444;
+      flex-shrink: 0;
+      transition: background 0.25s;
+    }
+    .dot.connected    { background: #22c55e; }
+    .dot.disconnected { background: #ef4444; }
+    .status {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 14px;
+      min-height: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #2f2f2f;
+      color: #e5e5e5;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover:not(:disabled) { background: #3a3a3a; }
+    button:disabled { opacity: 0.4; cursor: default; }
+    .warn {
+      font-size: 11px;
+      color: #f87171;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h2><span class="dot" id="dot"></span> ChatGPT API Bridge</h2>
+  <p class="status" id="status">Checking...</p>
+  <button id="btn">Connect to server</button>
+  <p class="warn" id="warn">Open chatgpt.com in a tab first.</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>

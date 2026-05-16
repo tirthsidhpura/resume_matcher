@@ -1,6 +1,7 @@
 {
   "name": "job-analyzer",
   "version": "1.0.0",
+  "author": "Tirth Sidhpura",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
