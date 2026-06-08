@@ -2,7 +2,7 @@ import re
 import time
 import fitz  # PyMuPDF
 import spacy
-
+# this is just for the larnign purpose
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 from sklearn.metrics.pairwise import cosine_similarity
 
