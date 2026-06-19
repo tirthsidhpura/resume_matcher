@@ -2,7 +2,6 @@
 
 An intelligent **Applicant Tracking System (ATS)** that scrapes job listings from LinkedIn and Indeed, analyzes user resumes, and calculates a **percentage-based match score** to help job seekers find the best opportunities.
 
-🌐 **Live Demo:** http://ats.paperonboard.in/
 
 ---
 
