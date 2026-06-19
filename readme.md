@@ -250,7 +250,7 @@ MIT License
 
 ## 👨‍💻 Author
 
-Built with ❤️ by **Tirth (Erience)**
+Built with ❤️ by **Tirth **
 
 ---
 
