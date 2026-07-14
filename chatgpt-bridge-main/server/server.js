@@ -132,7 +132,7 @@ app.post('/v1/chat/completions', async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0",() => {
   console.log(`\nChatGPT API Bridge`);
   console.log(`──────────────────────────────────────────`);
   console.log(`Listening on      http://localhost:${PORT}`);

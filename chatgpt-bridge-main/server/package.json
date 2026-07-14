@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Local OpenAI-compatible server that routes requests through a ChatGPT browser session",
   "main": "server.js",
+  "author": "https://github.com/sivaprasad2000/chatgpt-bridge",
   "scripts": {
     "start": "node server.js"
   },

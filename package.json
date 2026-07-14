@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "author": "Tirth Sidhpura",
   "main": "app.js",
+    "repository": {
+    "type": "git",
+    "url": "https://github.com/tirthsidhpura/resume_matcher"
+  },
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js"

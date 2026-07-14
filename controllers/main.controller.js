@@ -94,6 +94,7 @@ exports.postJobs = async (req, res) => {
     //   });
     // }
 
+
     if (!capturedAt || !source || !title || !description) {
       return res.status(400).json({
         success: false,

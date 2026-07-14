@@ -13,7 +13,20 @@ services:
       - redis
     restart: unless-stopped
     command: npm run dev
-
+  app2:
+    build:
+      context: ./chatgpt-bridge-main/server
+    container_name: chatgpt-bridge-main
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./chatgpt-bridge-main/server:/server
+      - /app/node_modules
+    depends_on:
+      - redis
+      - app
+    restart: unless-stopped
+    command: npm start
   redis:
     image: redis:7
     container_name: redis_db

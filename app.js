@@ -44,6 +44,7 @@ const RETRY_DELAY_MS = 2 * 60 * 1000;
 const WORKER_POLL_MS = 30000;
 const LOCK_TIMEOUT_MS = 10 * 60 * 1000; // 10 min stale lock recovery
 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -55,12 +56,10 @@ mongoose
 .connect(MONGO_URI)
 .then(() => console.log("MongoDB connected"))
 .catch((err) => {
-  console.error("MongoDB connection error:", err.message);
+  console.error("MongoDB connection error:", err);
   process.exit(1);
 });
 
-
-// app.use("/api/pdf", pdfRoutes);
 
 
 app.use('/', mainRoutes)

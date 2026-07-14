@@ -6,7 +6,7 @@ const { safeParseModelJson, validateResumeJson, safeParseModelJsonforResume, par
 async function callAnApi(prompt) {
   try {
     
-  
+    console.log({OLLAMA_URL})
    const response = await fetch(OLLAMA_URL, {
     method: "POST",
     headers: {
@@ -25,6 +25,7 @@ async function callAnApi(prompt) {
   });
 
   const result = await response.json();
+  console.log("result.choices[0].message.content", result.choices[0].message.content)
   return result.choices[0].message.content;
   } catch (error) {
    console.log({error}) 
