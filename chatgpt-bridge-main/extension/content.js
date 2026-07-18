@@ -87,7 +87,7 @@ function getRealAssistantDivs() {
 
 // previous one 
 /*
-async function waitForResponse(timeoutMs = 180_000, prevCount = 0) {
+async function waitForResponse(timeoutMs = 180_000, prevCount = 0, { requireJson = false } = {}) {
   const start = Date.now();
 
   console.log('[Bridge] waitForResponse — prevCount:', prevCount);
@@ -145,7 +145,7 @@ async function waitForResponse(timeoutMs = 180_000, prevCount = 0) {
 */
 
 
-async function waitForResponse(timeoutMs = 180_000, prevCount = 0) {
+async function waitForResponse(timeoutMs = 180_000, prevCount = 0, { requireJson = false } = {}) {
   const start = Date.now();
 
   console.log('[Bridge] waitForResponse — prevCount:', prevCount);
@@ -212,15 +212,18 @@ async function waitForResponse(timeoutMs = 180_000, prevCount = 0) {
       }
 
       const textStableFor = stableSince ? Date.now() - stableSince : 0;
+      const jsonReady = !requireJson || isParseableJson(currentText);
 
       // Only finish when:
       // 1. We saw text
       // 2. Text has been stable for 2.5 seconds
       // 3. Stop button is gone, if it ever appeared
+      // 4. JSON parses successfully, when a JSON response is expected
       if (
         sawSomeText &&
         textStableFor >= stableRequiredMs &&
-        (!sawStopButton || !stopBtn)
+        (!sawStopButton || !stopBtn) &&
+        jsonReady
       ) {
         console.log('[Bridge] response fully stabilized');
         clearInterval(t);
@@ -233,6 +236,10 @@ async function waitForResponse(timeoutMs = 180_000, prevCount = 0) {
 
   if (!text) {
     throw new Error('Assistant message div is empty');
+  }
+
+  if (requireJson && !isParseableJson(text)) {
+    throw new Error('Assistant response finished but did not contain parseable JSON');
   }
 
   return text;
@@ -281,6 +288,77 @@ function contentToText(content) {
   return String(content);
 }
 
+function stripCodeFence(text) {
+  const cleaned = (text || '').trim();
+  const fenced = cleaned.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fenced ? fenced[1].trim() : cleaned;
+}
+
+function parseJsonResponse(text) {
+  const cleaned = stripCodeFence(text);
+  if (!cleaned) return null;
+
+  try {
+    return { text: cleaned, parsed: JSON.parse(cleaned) };
+  } catch (_) {}
+
+  return null;
+}
+
+function extractJsonObject(text) {
+  const cleaned = stripCodeFence(text);
+  if (!cleaned) return null;
+
+  const parsedResponse = parseJsonResponse(cleaned);
+  if (parsedResponse) return parsedResponse;
+
+  const start = cleaned.indexOf('{');
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (ch === '\\') {
+      escaped = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (ch === '{') depth++;
+    if (ch === '}') depth--;
+
+    if (depth === 0) {
+      const candidate = cleaned.slice(start, i + 1);
+      try {
+        return { text: candidate, parsed: JSON.parse(candidate) };
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  return null;
+}
+
+function isParseableJson(text) {
+  return Boolean(parseJsonResponse(text));
+}
+
 
 /*
 function parseToolCalls(text) {
@@ -300,17 +378,8 @@ function parseToolCalls(text) {
 function parseToolCalls(text) {
   if (!text) return null;
 
-  let cleaned = text.trim();
-
-  // Remove markdown code fences if ChatGPT returns JSON inside ```json
-  cleaned = cleaned
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/```$/i, '')
-    .trim();
-
   try {
-    const parsed = JSON.parse(cleaned);
+    const parsed = extractJsonObject(text)?.parsed;
 
     if (Array.isArray(parsed.tool_calls) && parsed.tool_calls.length > 0) {
       return parsed.tool_calls;
@@ -337,10 +406,15 @@ async function handleChatRequest({ requestId, messages, tools, model }) {
   console.log('[Bridge] prevCount:', prevCount, '— clicking send');
   sendBtn.click();
   console.log('[Bridge] send clicked, waiting for response');
-  const response = await waitForResponse(180_000, prevCount);
-  console.log('[Bridge] got response, length:', response.length);
-  const toolCalls = tools && tools.length > 0 ? parseToolCalls(response) : null;
-  return { requestId, response, toolCalls, error: null };
+  const expectJson = true;
+  const response = await waitForResponse(180_000, prevCount, { requireJson: expectJson });
+  const jsonResponse = parseJsonResponse(response);
+  if (!jsonResponse) {
+    throw new Error('Assistant response finished but did not contain parseable JSON');
+  }
+  console.log('[Bridge] got response, length:', jsonResponse.text.length);
+  const toolCalls = tools && tools.length > 0 ? parseToolCalls(jsonResponse.text) : null;
+  return { requestId, response: jsonResponse.text, toolCalls, error: null };
 }
 
 // ─── WebSocket connection ─────────────────────────────────────────────────────
