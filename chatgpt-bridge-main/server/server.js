@@ -52,7 +52,7 @@ wss.on('connection', (socket) => {
   });
 });
 
-function askExtension(payload, timeoutMs = 180_000) {
+function askExtension(payload, timeoutMs = 600_000) {
   return new Promise((resolve, reject) => {
     if (!extensionSocket || extensionSocket.readyState !== 1) {
       return reject(new Error(

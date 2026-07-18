@@ -154,7 +154,7 @@
                 id="fullName"
                 name="fullName"
                 placeholder="Enter your name"
-                value="Tirth Sidhpura"
+                value="<%= personalInfo?.name || '' %>"
               />
             </div>
 
@@ -166,7 +166,7 @@
                 id="phoneNumber"
                 name="phoneNumber"
                 placeholder="Enter phone number"
-                value="548-333-1911"
+                value="<%= personalInfo?.phone || '' %>"
               />
             </div>
 
@@ -178,7 +178,7 @@
                 id="companyName"
                 name="companyName"
                 placeholder="Enter company name",
-                value="<%= data.analysis.company_name %>"
+                value="<%= data?.analysis?.company_name || '' %>"
               />
             </div>
           </div>

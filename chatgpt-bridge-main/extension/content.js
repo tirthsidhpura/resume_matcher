@@ -35,7 +35,41 @@ function $(selectors) {
   return null;
 }
 
+function isVisible(el) {
+  if (!el) return false;
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+    return false;
+  }
+  const rect = el.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
+function findVisible(selectors) {
+  for (const sel of selectors) {
+    const el = [...document.querySelectorAll(sel)].find(isVisible);
+    if (el) return el;
+  }
+  return null;
+}
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const DEBUG_SCAN = true;
+const DEBUG_FULL_SCRAPE = true;
+let lastJsonParseError = '';
+
+function previewText(text, maxLen = 240) {
+  const compact = (text || '').replace(/\s+/g, ' ').trim();
+  if (compact.length <= maxLen) return compact;
+  const half = Math.floor(maxLen / 2);
+  return `${compact.slice(0, half)} ... ${compact.slice(-half)}`;
+}
+
+function logScrapedText(label, text) {
+  if (!DEBUG_FULL_SCRAPE) return;
+  console.log(`[Bridge] ${label} length:`, (text || '').length);
+  console.log(`[Bridge] ${label} full text:`, text);
+}
 
 function waitFor(condition, timeoutMs = 15000, intervalMs = 200) {
   return new Promise((resolve, reject) => {
@@ -85,9 +119,21 @@ function getRealAssistantDivs() {
     });
 }
 
+function getAssistantText(div) {
+  const codeBlocks = [...div.querySelectorAll('pre, code')]
+    .map(el => (el.innerText || el.textContent || '').trim())
+    .filter(Boolean);
+
+  if (codeBlocks.length > 0) {
+    return codeBlocks.sort((a, b) => b.length - a.length)[0];
+  }
+
+  return (div.innerText || div.textContent || '').trim();
+}
+
 // previous one 
 /*
-async function waitForResponse(timeoutMs = 180_000, prevCount = 0, { requireJson = false } = {}) {
+async function waitForResponse(timeoutMs = 600_000, prevCount = 0, { requireJson = false } = {}) {
   const start = Date.now();
 
   console.log('[Bridge] waitForResponse — prevCount:', prevCount);
@@ -145,7 +191,7 @@ async function waitForResponse(timeoutMs = 180_000, prevCount = 0, { requireJson
 */
 
 
-async function waitForResponse(timeoutMs = 180_000, prevCount = 0, { requireJson = false } = {}) {
+async function waitForResponse(timeoutMs = 300_000, prevCount = 0, { requireJson = false } = {}) {
   const start = Date.now();
 
   console.log('[Bridge] waitForResponse — prevCount:', prevCount);
@@ -174,16 +220,19 @@ async function waitForResponse(timeoutMs = 180_000, prevCount = 0, { requireJson
 
   console.log('[Bridge] watching div:', div.getAttribute('data-message-id'));
 
-  // Wait until text is stable AFTER generation has probably finished
-  await new Promise((resolve, reject) => {
+  // Wait until JSON parses and the answer stops changing, or until plain text is stable.
+  const completedText = await new Promise((resolve, reject) => {
     let lastText = '';
     let stableSince = null;
     let sawSomeText = false;
     let sawStopButton = false;
+    let scanCount = 0;
 
-    const stableRequiredMs = 2500;
+    const stableRequiredMs = requireJson ? 5000 : 2500;
 
     const t = setInterval(() => {
+      scanCount++;
+
       if (Date.now() - start > timeoutMs) {
         clearInterval(t);
         reject(new Error('Timed out waiting for full response'));
@@ -193,8 +242,9 @@ async function waitForResponse(timeoutMs = 180_000, prevCount = 0, { requireJson
       const latestDiv = getRealAssistantDivs().at(-1);
       if (latestDiv) div = latestDiv;
 
-      const currentText = (div.innerText || '').trim();
-      const stopBtn = $(SEL.stopBtn);
+      const currentText = getAssistantText(div);
+      const stopBtn = findVisible(SEL.stopBtn);
+      const sendBtn = findVisible(SEL.sendBtn);
 
       if (stopBtn) {
         sawStopButton = true;
@@ -204,41 +254,83 @@ async function waitForResponse(timeoutMs = 180_000, prevCount = 0, { requireJson
         sawSomeText = true;
       }
 
-      if (currentText !== lastText) {
+      const textChanged = currentText !== lastText;
+
+      if (textChanged) {
         console.log('[Bridge] text update, length:', currentText.length);
+        logScrapedText('scraped assistant text', currentText);
         lastText = currentText;
         stableSince = Date.now();
-        return;
       }
 
       const textStableFor = stableSince ? Date.now() - stableSince : 0;
-      const jsonReady = !requireJson || isParseableJson(currentText);
+
+      if (requireJson) {
+        const jsonResponse = extractJsonObject(currentText);
+        if (DEBUG_SCAN) {
+          console.log('[Bridge] scan', {
+            scan: scanCount,
+            length: currentText.length,
+            changed: textChanged,
+            stableForMs: textStableFor,
+            jsonOk: Boolean(jsonResponse),
+            jsonLength: jsonResponse?.text.length ?? 0,
+            jsonRepaired: Boolean(jsonResponse?.repaired),
+            jsonError: lastJsonParseError,
+            stopVisible: Boolean(stopBtn),
+            sendVisible: Boolean(sendBtn),
+            sawStopButton,
+            preview: previewText(currentText),
+          });
+        }
+        if (
+          jsonResponse &&
+          sawSomeText &&
+          textStableFor >= stableRequiredMs &&
+          !stopBtn
+        ) {
+          console.log('[Bridge] complete stable JSON found, length:', jsonResponse.text.length);
+          clearInterval(t);
+          resolve(jsonResponse.text);
+          return;
+        }
+      } else if (DEBUG_SCAN) {
+        console.log('[Bridge] scan', {
+          scan: scanCount,
+          length: currentText.length,
+          changed: textChanged,
+          stableForMs: textStableFor,
+          stopVisible: Boolean(stopBtn),
+          sendVisible: Boolean(sendBtn),
+          sawStopButton,
+          preview: previewText(currentText),
+        });
+      }
 
       // Only finish when:
       // 1. We saw text
-      // 2. Text has been stable for 2.5 seconds
+      // 2. Text has been stable long enough
       // 3. Stop button is gone, if it ever appeared
-      // 4. JSON parses successfully, when a JSON response is expected
       if (
+        !requireJson &&
         sawSomeText &&
         textStableFor >= stableRequiredMs &&
-        (!sawStopButton || !stopBtn) &&
-        jsonReady
+        !stopBtn
       ) {
         console.log('[Bridge] response fully stabilized');
         clearInterval(t);
-        resolve();
+        resolve(currentText);
       }
     }, 250);
   });
 
-  const text = (div.innerText || '').trim();
+  const text = (completedText || '').trim();
 
   if (!text) {
     throw new Error('Assistant message div is empty');
   }
 
-  if (requireJson && !isParseableJson(text)) {
+  if (requireJson && !extractJsonObject(text)) {
     throw new Error('Assistant response finished but did not contain parseable JSON');
   }
 
@@ -294,14 +386,92 @@ function stripCodeFence(text) {
   return fenced ? fenced[1].trim() : cleaned;
 }
 
+function repairJsonStringContent(text) {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+
+    if (escaped) {
+      if (inString && !'"\\/bfnrtu'.includes(ch)) {
+        result += '\\';
+      }
+      result += ch;
+      escaped = false;
+      continue;
+    }
+
+    if (ch === '\\') {
+      result += ch;
+      escaped = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = !inString;
+      result += ch;
+      continue;
+    }
+
+    if (inString && /[\u0000-\u001F]/.test(ch)) {
+      result += ' ';
+      continue;
+    }
+
+    result += ch;
+  }
+
+  return result;
+}
+
+function tryParseJson(text) {
+  const normalized = text
+    .replace(/^\uFEFF/, '')
+    .replace(/[\u200B-\u200D\u2060]/g, '')
+    .replace(/\u00A0/g, ' ');
+
+  try {
+    return { text: normalized, parsed: JSON.parse(normalized), repaired: normalized !== text };
+  } catch (error) {
+    const repaired = repairJsonStringContent(normalized);
+    if (repaired !== normalized) {
+      try {
+        return { text: repaired, parsed: JSON.parse(repaired), repaired: true };
+      } catch (repairError) {
+        return {
+          text: repaired,
+          parsed: null,
+          repaired: true,
+          error: repairError.message,
+          originalError: error.message,
+          ok: false,
+        };
+      }
+    }
+
+    return {
+      text: normalized,
+      parsed: null,
+      repaired: normalized !== text,
+      error: error.message,
+      ok: false,
+    };
+  }
+}
+
 function parseJsonResponse(text) {
   const cleaned = stripCodeFence(text);
   if (!cleaned) return null;
 
-  try {
-    return { text: cleaned, parsed: JSON.parse(cleaned) };
-  } catch (_) {}
+  const result = tryParseJson(cleaned);
+  if (result?.parsed !== null && result?.parsed !== undefined) {
+    lastJsonParseError = '';
+    return result;
+  }
 
+  lastJsonParseError = result?.error || result?.originalError || 'Unknown JSON parse error';
   return null;
 }
 
@@ -312,10 +482,14 @@ function extractJsonObject(text) {
   const parsedResponse = parseJsonResponse(cleaned);
   if (parsedResponse) return parsedResponse;
 
-  const start = cleaned.indexOf('{');
+  const objectStart = cleaned.indexOf('{');
+  const arrayStart = cleaned.indexOf('[');
+  const starts = [objectStart, arrayStart].filter(index => index !== -1);
+  const start = starts.length ? Math.min(...starts) : -1;
   if (start === -1) return null;
 
-  let depth = 0;
+  const opener = cleaned[start];
+  const stack = [];
   let inString = false;
   let escaped = false;
 
@@ -339,16 +513,30 @@ function extractJsonObject(text) {
 
     if (inString) continue;
 
-    if (ch === '{') depth++;
-    if (ch === '}') depth--;
+    if (ch === '{' || ch === '[') {
+      stack.push(ch === '{' ? '}' : ']');
+      continue;
+    }
 
-    if (depth === 0) {
-      const candidate = cleaned.slice(start, i + 1);
-      try {
-        return { text: candidate, parsed: JSON.parse(candidate) };
-      } catch (_) {
+    if (ch === '}' || ch === ']') {
+      if (stack.length === 0 || stack.at(-1) !== ch) {
         return null;
       }
+
+      stack.pop();
+    }
+
+    if (stack.length === 0) {
+      const candidate = cleaned.slice(start, i + 1);
+      logScrapedText('json candidate', candidate);
+      const result = tryParseJson(candidate);
+      if (result?.parsed !== null && result?.parsed !== undefined) {
+        lastJsonParseError = '';
+        return result;
+      }
+
+      lastJsonParseError = result?.error || result?.originalError || 'Unknown JSON parse error';
+      return null;
     }
   }
 
@@ -356,7 +544,7 @@ function extractJsonObject(text) {
 }
 
 function isParseableJson(text) {
-  return Boolean(parseJsonResponse(text));
+  return Boolean(extractJsonObject(text));
 }
 
 
@@ -407,8 +595,8 @@ async function handleChatRequest({ requestId, messages, tools, model }) {
   sendBtn.click();
   console.log('[Bridge] send clicked, waiting for response');
   const expectJson = true;
-  const response = await waitForResponse(180_000, prevCount, { requireJson: expectJson });
-  const jsonResponse = parseJsonResponse(response);
+  const response = await waitForResponse(600_000, prevCount, { requireJson: expectJson });
+  const jsonResponse = extractJsonObject(response);
   if (!jsonResponse) {
     throw new Error('Assistant response finished but did not contain parseable JSON');
   }

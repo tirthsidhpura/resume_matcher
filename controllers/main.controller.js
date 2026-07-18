@@ -4,6 +4,7 @@ const Job = require("../models/Job");
 const { generateResumeLatex } = require("../services/latexService");
 const { normalizeUrl } = require("../utils/urlUtils");
 const workerLoop = require("../workers/analysisWorker");
+const { getUserProfileText, getPersonalInfoFromGoogleDoc } = require("../services/googleDocService");
 
 exports.getMain = async (req, res) => {
 
@@ -28,7 +29,12 @@ exports.getMain = async (req, res) => {
     
         const jobs = await Job.find(filter).sort({ createdAt: -1 });
     
-        res.render("index", { jobs });
+        const userProfileText = await getUserProfileText();
+        res.render("index", {
+          jobs,
+          userProfileText,
+          googleDocUrl: process.env.GOOGLE_DOC_URL || process.env.RESUME_GOOGLE_DOC_URL || ""
+        });
       } catch (error) {
         res.status(500).send("Failed to load dashboard");
       }
@@ -266,9 +272,11 @@ exports.getspecificJobforResumeGen = async (req, res) => {
     // console.log({j: job.jobResume})
     const latex = await generateResumeLatex(job.jobResume);
     // console.log({latex})
+    const personalInfo = await getPersonalInfoFromGoogleDoc();
     return res.render("latex",{
       success: true,
       data: job,
+      personalInfo,
       sampleLatex: latex
     });
   } catch (error) {

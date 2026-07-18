@@ -1,4 +1,5 @@
 const { dataName, dataTitle, dataLocation, dataEmail, dataPhone, dataGithub, dataLinkedin, dataPortfolio, dataEducation } = require("../config/personaldetails");
+const { getPersonalInfoFromGoogleDoc } = require("./googleDocService");
 
 function escapeLatex(value = "") {
   return String(value)
@@ -20,7 +21,8 @@ function formatLink(url) {
   return `\\href{${escapeLatex(url)}}{${escapeLatex(clean)}}`;
 }
 
-function generateResumeLatex(jobResume, personalInfo = {}) {
+async function generateResumeLatex(jobResume, personalInfo = null) {
+  const googleDocInfo = personalInfo || await getPersonalInfoFromGoogleDoc();
     // console.log(`came`)
   const {
     name = dataName,
@@ -33,7 +35,7 @@ function generateResumeLatex(jobResume, personalInfo = {}) {
     portfolio = dataPortfolio,
     education = dataEducation,
     relocation = "Fully open and willing to relocate anywhere in Canada as required."
-  } = personalInfo;
+  } = googleDocInfo;
 
   const skillsLatex = jobResume.skills
     .map(skill => {

@@ -1,7 +1,7 @@
 const { APPLY_THRESHOLD } = require("../config/aiConfig.js");
 const Joi = require("joi");
-const { dataResume, dataProjects } = require("../config/personaldetails.js");
 const { DataSystemPrompt, datamainInstruction, analysisPrompt } = require("../config/promptConfig.js");
+const { getUserProfileText } = require("./googleDocService.js");
 
 
 function buildPrompt(resumeText, jobDescription) {
@@ -17,17 +17,14 @@ ${jobDescription}
 }
 
 
-function buildPromptforResume(JD) {
+async function buildPromptforResume(JD) {
 const systemPrompt = DataSystemPrompt;
 
     // ===== MAIN INSTRUCTION =====
     const mainInstruction = datamainInstruction;
 
     // ===== CURRENT RESUME DATA =====
-    const resumeData = dataResume;
-
-    // ===== PROJECTS =====
-    const projects = dataProjects;
+    const resumeData = await getUserProfileText();
 
     // ===== JOB DESCRIPTION =====
     const jobDescription = JD;
@@ -70,7 +67,6 @@ ${systemPrompt}
 ${mainInstruction}
 
 ${resumeData}
-
 
 ${jobDescription}
 

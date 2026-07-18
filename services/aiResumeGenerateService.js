@@ -107,7 +107,7 @@ async function generateLatexResume() {
       throw new Error("Job not found");
     }
 
-    const latex = generateResumeLatex(job.jobResume);
+    const latex = await generateResumeLatex(job.jobResume);
 
     const texFilePath = path.join(tempDir, "document.tex");
     const pdfFilePath = path.join(tempDir, "document.pdf");

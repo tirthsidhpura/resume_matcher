@@ -14,13 +14,13 @@ Instead of manually reading every job description, users can save job postings, 
 
 For every analyzed job, the system provides:
 
-* ATS match score
-* Recommendation on whether to apply
-* Matched keywords
-* Missing keywords
-* Strong skill matches
-* Job and company information
-* AI-generated summary
+- ATS match score
+- Recommendation on whether to apply
+- Matched keywords
+- Missing keywords
+- Strong skill matches
+- Job and company information
+- AI-generated summary
 
 The application is designed to run locally. Users only need Docker, Git, and the project repository to start using it.
 
@@ -32,21 +32,21 @@ The application is designed to run locally. Users only need Docker, Git, and the
 
 The application can collect job information from supported job platforms such as:
 
-* LinkedIn
-* Indeed
+- LinkedIn
+- Indeed
 
 Job information can be captured through the configured scraper or browser-extension workflow.
 
 The system stores information such as:
 
-* Job title
-* Company name
-* Job URL
-* Job description
-* Location
-* Required skills
-* Required experience
-* Technologies and keywords
+- Job title
+- Company name
+- Job URL
+- Job description
+- Location
+- Required skills
+- Required experience
+- Technologies and keywords
 
 > Job platform page structures can change, so scraper selectors may occasionally require updates.
 
@@ -58,17 +58,17 @@ Users can upload their resume to the application.
 
 Supported resume formats include:
 
-* PDF
-* DOCX, when configured
+- PDF
+- DOCX, when configured
 
 The backend extracts resume content such as:
 
-* Technical skills
-* Work experience
-* Education
-* Tools and technologies
-* Certifications
-* Relevant keywords
+- Technical skills
+- Work experience
+- Education
+- Tools and technologies
+- Certifications
+- Relevant keywords
 
 The parsed resume text is then used during job analysis.
 
@@ -103,14 +103,14 @@ Match score below 72 → NOT RECOMMENDED
 
 The analysis considers:
 
-* Technical skill overlap
-* Resume keywords
-* Job-description keywords
-* Relevant experience
-* Technologies and frameworks
-* Role responsibilities
-* Missing requirements
-* Overall suitability
+- Technical skill overlap
+- Resume keywords
+- Job-description keywords
+- Relevant experience
+- Technologies and frameworks
+- Role responsibilities
+- Missing requirements
+- Overall suitability
 
 ---
 
@@ -118,12 +118,12 @@ The analysis considers:
 
 For every analyzed job, the application displays:
 
-* Match score from 0 to 100
-* Good-to-apply or not-recommended status
-* Matching skills
-* Missing skills
-* Strong resume-to-job matches
-* AI-generated explanation
+- Match score from 0 to 100
+- Good-to-apply or not-recommended status
+- Matching skills
+- Missing skills
+- Strong resume-to-job matches
+- AI-generated explanation
 
 This helps users prioritize high-quality applications instead of applying blindly.
 
@@ -133,8 +133,8 @@ This helps users prioritize high-quality applications instead of applying blindl
 
 Resume and job analysis is processed asynchronously using:
 
-* Redis
-* BullMQ
+- Redis
+- BullMQ
 
 When a job is submitted for analysis:
 
@@ -155,12 +155,12 @@ The project can use Bull Board to monitor BullMQ jobs.
 
 The queue dashboard can display:
 
-* Waiting jobs
-* Active jobs
-* Completed jobs
-* Failed jobs
-* Retry attempts
-* Worker errors
+- Waiting jobs
+- Active jobs
+- Completed jobs
+- Failed jobs
+- Retry attempts
+- Worker errors
 
 This is useful for debugging job-analysis failures.
 
@@ -172,13 +172,13 @@ Users can maintain a local database of jobs they are interested in.
 
 Depending on the implemented interface, users can:
 
-* Save job postings
-* View collected jobs
-* Start resume analysis
-* Review analysis results
-* Filter jobs by score or recommendation
-* Track jobs by date
-* Remove unwanted jobs
+- Save job postings
+- View collected jobs
+- Start resume analysis
+- Review analysis results
+- Filter jobs by score or recommendation
+- Track jobs by date
+- Remove unwanted jobs
 
 ---
 
@@ -218,12 +218,12 @@ The analysis result is saved to the database and connected to the corresponding 
 
 The user can review:
 
-* Match score
-* Apply recommendation
-* Matched keywords
-* Missing keywords
-* Strong matches
-* Analysis summary
+- Match score
+- Apply recommendation
+- Matched keywords
+- Missing keywords
+- Strong matches
+- Analysis summary
 
 ---
 
@@ -308,9 +308,9 @@ The exact folder names may differ depending on the current repository structure.
 
 Install the following software before starting:
 
-* Git
-* Docker Desktop
-* Docker Compose
+- Git
+- Docker Desktop
+- Docker Compose
 
 Node.js is only required when running the application outside Docker.
 
@@ -341,9 +341,14 @@ REDIS_PORT=6379
 
 AI_API_URL=http://app2:4000/v1/chat/completions
 AI_MODEL=mistral
+
+# Optional: keep resume/profile data in Google Docs instead of editing code
+GOOGLE_DOC_URL=https://docs.google.com/document/d/YOUR_DOCUMENT_ID/edit
 ```
 
 The exact variables may depend on the AI service and database configuration used in the project.
+
+`GOOGLE_DOC_URL` should point to a Google Doc that is shared so the app can read it. The app converts normal Google Docs links into a plain-text export URL and uses that document for profile details, resume-generation prompts, dashboard prompt-copy buttons, and LaTeX page defaults.
 
 When services run inside Docker Compose, use Docker service names such as:
 
@@ -370,11 +375,11 @@ docker compose up --build -d
 
 Docker Compose starts the required services, which may include:
 
-* Main Node.js application
-* Redis
-* MongoDB
-* Local AI service
-* BullMQ worker
+- Main Node.js application
+- Redis
+- MongoDB
+- Local AI service
+- BullMQ worker
 
 ---
 
@@ -620,11 +625,11 @@ The AI service must return valid JSON containing every required ATS field.
 
 The response should not contain:
 
-* Markdown code fences
-* Explanations before the JSON
-* Explanations after the JSON
-* Missing keys
-* An empty summary
+- Markdown code fences
+- Explanations before the JSON
+- Explanations after the JSON
+- Missing keys
+- An empty summary
 
 ---
 
@@ -634,11 +639,11 @@ LinkedIn and Indeed can change their HTML structure.
 
 When this happens:
 
-* Inspect the new page structure
-* Update the selectors
-* Check whether login is required
-* Review rate limits and anti-bot restrictions
-* Consider using approved APIs or user-triggered browser extraction
+- Inspect the new page structure
+- Update the selectors
+- Check whether login is required
+- Review rate limits and anti-bot restrictions
+- Consider using approved APIs or user-triggered browser extraction
 
 ---
 
@@ -666,11 +671,11 @@ database credentials
 
 This project is intended for:
 
-* Personal use
-* Educational use
-* Research
-* Portfolio demonstration
-* Local productivity workflows
+- Personal use
+- Educational use
+- Research
+- Portfolio demonstration
+- Local productivity workflows
 
 Automated scraping may be restricted by a website’s terms of service, robots policies, access controls, or applicable laws.
 
@@ -682,20 +687,20 @@ Use official APIs, permitted data sources, or user-triggered extraction whenever
 
 ## 🚧 Planned Improvements
 
-* Browser extension for capturing job postings
-* Support for more job platforms
-* Improved job-status tracking
-* Resume version management
-* Custom scoring weights
-* Embedding-based semantic similarity
-* Better duplicate-job detection
-* AI-generated resume improvements
-* Resume generation for selected jobs
-* Application analytics
-* Interview tracking
-* Authentication and multiple-user support
-* Automated tests
-* Improved Docker production configuration
+- Browser extension for capturing job postings
+- Support for more job platforms
+- Improved job-status tracking
+- Resume version management
+- Custom scoring weights
+- Embedding-based semantic similarity
+- Better duplicate-job detection
+- AI-generated resume improvements
+- Resume generation for selected jobs
+- Application analytics
+- Interview tracking
+- Authentication and multiple-user support
+- Automated tests
+- Improved Docker production configuration
 
 ---
 
@@ -756,8 +761,8 @@ https://github.com/tirthsidhpura/resume_matcher
 
 To support the project:
 
-* Star the repository
-* Report bugs
-* Suggest improvements
-* Submit pull requests
-* Share the project with other developers and job seekers
+- Star the repository
+- Report bugs
+- Suggest improvements
+- Submit pull requests
+- Share the project with other developers and job seekers
