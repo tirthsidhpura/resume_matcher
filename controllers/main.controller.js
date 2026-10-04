@@ -1,6 +1,9 @@
 
 
 const Job = require("../models/Job");
+const path = require("path");
+const { resumeQueue, addResumeJob } = require("../queues/resumeQueue");
+const { RESUME_PDF_PATH } = require("../config/aiConfig");
 const { generateResumeLatex } = require("../services/latexService");
 const { normalizeUrl } = require("../utils/urlUtils");
 const workerLoop = require("../workers/analysisWorker");
@@ -233,6 +236,64 @@ exports.patchJobs = async (req, res) => {
     });
   }
 }
+
+exports.restartAnalysis = async (req, res) => {
+  const { id } = req.params;
+  if (!/^[a-f\d]{24}$/i.test(id)) {
+    return res.status(400).json({ success: false, message: "Invalid MongoDB job ID" });
+  }
+  let claimedJob;
+  let enqueued = false;
+  try {
+    const job = await Job.findById(id);
+    if (!job) return res.status(404).json({ success: false, message: "Job not found" });
+    claimedJob = await Job.findOneAndUpdate(
+      { _id: id, $or: [
+        { analysisRevision: job.analysisRevision || 0 },
+        ...(job.analysisRevision ? [] : [{ analysisRevision: { $exists: false } }]),
+      ] },
+      { $inc: { analysisRevision: 1 }, $set: { analysisStatus: "queued", analysisError: "", lockedAt: null } },
+      { new: true }
+    );
+    if (!claimedJob) {
+      return res.status(409).json({ success: false, message: "Another restart just occurred. Please retry." });
+    }
+    const previousJobs = await resumeQueue.getJobs(["active", "waiting", "delayed", "prioritized", "waiting-children", "failed", "completed"]);
+    for (const previous of previousJobs) {
+      if (previous.name !== "analyze-resume" || String(previous.data._id) !== id) continue;
+      if ((previous.data.analysisRevision || 0) >= claimedJob.analysisRevision) continue;
+      // A running entry stays locked, but its old revision cannot save a result.
+      if (await previous.getState() === "active") continue;
+      try {
+        await previous.remove();
+      } catch (error) {
+        if (await previous.getState() !== "active") throw error;
+      }
+    }
+    const queueId = `restart-analysis-${id}-${claimedJob.analysisRevision}`;
+    const queued = await addResumeJob({
+      _id: id,
+      resumePath: path.resolve(RESUME_PDF_PATH),
+      description: job.description,
+      analysisRevision: claimedJob.analysisRevision,
+    }, { jobId: queueId });
+    enqueued = true;
+    return res.status(202).json({ success: true, message: "AI analysis queued", queueJobId: queued.id });
+  } catch (error) {
+    if (claimedJob && !enqueued) {
+      try {
+        await Job.findOneAndUpdate({ _id: id, analysisRevision: claimedJob.analysisRevision }, { $set: {
+          analysisStatus: "failed",
+          analysisError: `Restart failed: ${error.message}`,
+          lockedAt: null,
+        } });
+      } catch (rollbackError) {
+        console.error("Failed to restore analysis status:", rollbackError);
+      }
+    }
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 
 exports.getspecificJob = async (req, res) => {

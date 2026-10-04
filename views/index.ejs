@@ -470,6 +470,7 @@
           <thead>
             <tr>
               <th>#</th>
+              <th>MongoDB ID</th>
               <th>Source</th>
               <th>Company Name</th>
               <th>Status</th>
@@ -511,6 +512,20 @@
                 <td><strong><%= index + 1 %></strong></td>
 
                 <td>
+                  <div class="d-flex align-items-center gap-2 text-nowrap">
+                    <code><%= job._id %></code>
+                    <button
+                      type="button"
+                      class="copy-btn"
+                      data-mongodb-id="<%= job._id %>"
+                      title="Copy MongoDB ID"
+                      aria-label="Copy MongoDB ID"
+                      onclick="copyPlainText(this.dataset.mongodbId, this)"
+                    >&#10697;</button>
+                  </div>
+                </td>
+
+                <td>
                   <span class="source-badge"><%= job.source || "Unknown Source" %></span>
                 </td>
 
@@ -522,6 +537,13 @@
                   <span class="status-badge status-<%= job.analysisStatus || 'pending' %>">
                     <%= job.analysisStatus || "pending" %>
                   </span>
+                  <div class="action-group">
+                    <button type="button" class="btn btn-sm btn-outline-primary restart-analysis-btn"
+                      data-job-id="<%= job._id %>"
+                      >
+                      &#8635; Restart Analysis
+                    </button>
+                  </div>
                 </td>
 
                                 <td>
@@ -686,7 +708,7 @@
                         <div class="error-box"><%= job.analysis?.raw_response || "No raw response available" %></div>
                       <% } %>
                     </div>
-                  <% } else if (job.analysisStatus === "processing" || job.analysisStatus === "pending") { %>
+                  <% } else if (["processing", "pending", "queued"].includes(job.analysisStatus)) { %>
                     <div class="analysis-box muted">Analysis is in progress...</div>
                   <% } else { %>
                     <span class="muted">N/A</span>
@@ -1235,6 +1257,24 @@ ${currentModalJob.description || "Paste JD here"}`;
     function getApplicationStatusBadgeClass(status) {
       return `status-badge app-status-badge app-status-${status || "not_applied"}`;
     }
+
+    document.addEventListener("click", async function (e) {
+      const button = e.target.closest(".restart-analysis-btn");
+      if (!button || button.disabled) return;
+      const originalText = button.innerText;
+      button.disabled = true;
+      button.innerText = "Queueing...";
+      try {
+        const response = await fetch(`/api/jobs/${button.dataset.jobId}/restart-analysis`, { method: "POST" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "Failed to restart analysis");
+        window.location.reload();
+      } catch (error) {
+        alert(error.message);
+        button.disabled = false;
+        button.innerText = originalText;
+      }
+    });
 
     document.addEventListener("click", async function (e) {
       if (!e.target.classList.contains("application-status-btn")) return;

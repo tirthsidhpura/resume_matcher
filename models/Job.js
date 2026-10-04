@@ -85,7 +85,7 @@ const jobSchema = new mongoose.Schema(
     },
     analysisStatus: {
       type: String,
-      enum: ["pending", "processing", "completed", "failed"],
+      enum: ["pending", "queued", "processing", "completed", "failed"],
       default: "pending",
       index: true
     },
@@ -94,6 +94,7 @@ const jobSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+    analysisRevision: { type: Number, default: 0 },
     retryCount: {
       type: Number,
       default: 0

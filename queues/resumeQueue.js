@@ -5,7 +5,7 @@ const resumeQueue = new Queue("resume-analysis-queue", {
   connection,
 });
 
-async function addResumeJob(jobData) {
+async function addResumeJob(jobData, options = {}) {
   return await resumeQueue.add("analyze-resume", jobData, {
     attempts: 3,
     delay: 10000,
@@ -16,6 +16,7 @@ async function addResumeJob(jobData) {
     },
     removeOnComplete: true,
     removeOnFail: false,
+    ...options,
   });
 }
 

@@ -8,8 +8,15 @@ const wait = require("../utils/wait");
 const { getDatafromMongodbforAIresume } = require("../services/aiResumeGenerateService");
 const { addCreateResumeJob } = require("../queues/resumeQueue");
 const { APPLY_THRESHOLD } = require("../config/aiConfig");
+function analysisFilter(job) {
+  return { _id: job._id, $or: [
+    { analysisRevision: job.analysisRevision || 0 },
+    ...(job.analysisRevision ? [] : [{ analysisRevision: { $exists: false } }]),
+  ] };
+}
 async function processOneJob(job) {
   await wait(10000);
+  if (!await Job.exists(analysisFilter(job))) return null;
   const resumeText = await extractResumeTextFromPDF(job.resumePath);
   const analysis = await analyzeJobWithMistral(
     resumeText,
@@ -38,6 +45,10 @@ function workerLoop() {
       }
       else {
         const job = bullJob.data;
+        const current = await Job.findOneAndUpdate(analysisFilter(job), { $set: {
+          analysisStatus: "processing", lastTriedAt: new Date(), lockedAt: new Date(),
+        } });
+        if (!current) return null;
         return await processOneJob(job);
 
       }
@@ -62,7 +73,8 @@ function workerLoop() {
       console.log(`resume generated successfully`);
     }
     else {
-      await Job.findByIdAndUpdate(job.data._id, {
+      if (!result) return;
+      const saved = await Job.findOneAndUpdate(analysisFilter(job.data), {
       $set: {
         analysis: result,
         analysisStatus: "completed",
@@ -71,6 +83,7 @@ function workerLoop() {
         lockedAt: null
       }
     });
+    if (!saved) return;
 
 
     if(result.match_score > APPLY_THRESHOLD) {
@@ -90,8 +103,20 @@ function workerLoop() {
     console.log(`saved `, job.data._id)
   });
 
-  worker.on("failed", (job, error) => {
+  worker.on("failed", async (job, error) => {
     console.error("[job failed]", job?.id, error.message);
+    if (!job || job.name === "generate-resume") return;
+    try {
+      const retrying = job.attemptsMade < (job.opts.attempts || 1);
+      await Job.findOneAndUpdate(analysisFilter(job.data), { $set: {
+        analysisStatus: retrying ? "queued" : "failed",
+        analysisError: error.message,
+        retryCount: job.attemptsMade,
+        lockedAt: retrying ? new Date() : null,
+      } });
+    } catch (saveError) {
+      console.error("Failed to save analysis failure:", saveError);
+    }
   });
 
   return worker;

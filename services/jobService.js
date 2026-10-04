@@ -29,6 +29,7 @@ const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
       _id: job._id.toString(),
       resumePath: absolutePath,
       description: job.description,
+      analysisRevision: job.analysisRevision || 0,
     });
 
     console.log("[job added to BullMQ]", job._id);
