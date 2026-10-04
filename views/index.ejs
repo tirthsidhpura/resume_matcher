@@ -393,6 +393,13 @@
     <div class="topbar">
       <div>
         <h1>Job Analyzer Dashboard</h1>
+        <p class="muted mb-2">
+          <% if (selectedDate) { %>
+            Jobs saved on <strong><%= new Date(selectedDate + 'T00:00:00Z').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) %></strong> (UTC)
+          <% } else { %>
+            No saved jobs yet
+          <% } %>
+        </p>
         <div class="d-flex flex-wrap gap-2 mt-2">
           <div class="meta-box">
             Total Jobs: <strong id="totalJobsCount"><%= jobs?.length || 0 %></strong>
@@ -403,7 +410,15 @@
         </div>
       </div>
       <div>
-        <a class="btn btn-outline-dark btn-sm" href="/api/jobs" target="_blank">Open API JSON</a>
+        <form action="/" method="get" class="d-flex align-items-end flex-wrap gap-2 mb-2">
+          <div>
+            <label for="jobDate" class="form-label mb-1">Saved Date</label>
+            <input id="jobDate" name="date" type="date" class="form-control form-control-sm" value="<%= selectedDate %>" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+          <a class="btn btn-outline-secondary btn-sm" href="/">Latest Date</a>
+        </form>
+        <a class="btn btn-outline-dark btn-sm" href="/api/jobs<%= selectedDate ? '?date=' + selectedDate : '' %>" target="_blank">Open API JSON</a>
       </div>
     </div>
 
@@ -462,7 +477,7 @@
 
     <% if (!jobs || jobs.length === 0) { %>
       <div class="empty">
-        No jobs found in database.
+        <%= selectedDate ? 'No jobs found for this date.' : 'No jobs found in database.' %>
       </div>
     <% } else { %>
       <div class="table-wrapper">

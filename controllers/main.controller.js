@@ -8,38 +8,24 @@ const { generateResumeLatex } = require("../services/latexService");
 const { normalizeUrl } = require("../utils/urlUtils");
 const workerLoop = require("../workers/analysisWorker");
 const { getUserProfileText, getPersonalInfoFromGoogleDoc } = require("../services/googleDocService");
+const { parseJobDate, getDashboardDateFilter } = require("../utils/jobDateFilter");
 
 exports.getMain = async (req, res) => {
 
       try {
-        const { date } = req.query; // e.g. ?date=23032026
-    
-        let filter = {};
-    
-        if (date) {
-          const day = date.substring(0, 2);
-          const month = date.substring(2, 4);
-          const year = date.substring(4, 8);
-    
-          const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
-          const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
-    
-          filter.createdAt = {
-            $gte: startDate,
-            $lte: endDate,
-          };
-        }
+        const { filter, selectedDate } = await getDashboardDateFilter(Job, req.query.date);
     
         const jobs = await Job.find(filter).sort({ createdAt: -1 });
     
         const userProfileText = await getUserProfileText();
         res.render("index", {
           jobs,
+          selectedDate,
           userProfileText,
           googleDocUrl: process.env.GOOGLE_DOC_URL || process.env.RESUME_GOOGLE_DOC_URL || ""
         });
       } catch (error) {
-        res.status(500).send("Failed to load dashboard");
+        res.status(error.status || 500).send(error.status === 400 ? error.message : "Failed to load dashboard");
       }
 }
 
@@ -48,23 +34,8 @@ exports.getMain = async (req, res) => {
 exports.getapijobs = async (req, res) => {
     try {
 
-       const { date } = req.query; // e.g. ?date=23032026
-    
-        let filter = {};
-    
-        if (date) {
-          const day = date.substring(0, 2);
-          const month = date.substring(2, 4);
-          const year = date.substring(4, 8);
-    
-          const startDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
-          const endDate = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
-    
-          filter.createdAt = {
-            $gte: startDate,
-            $lte: endDate,
-          };
-        }
+        const filter = req.query.date === undefined ? {} :
+          parseJobDate(typeof req.query.date === "string" ? req.query.date : "").filter;
     
         const jobs = await Job.find(filter).sort({ createdAt: -1 });
 
@@ -74,7 +45,7 @@ exports.getapijobs = async (req, res) => {
       data: jobs
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
