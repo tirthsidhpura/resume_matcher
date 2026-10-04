@@ -25,10 +25,18 @@ async function callAnApi(prompt) {
   });
 
   const result = await response.json();
-  console.log("result.choices[0].message.content", result.choices[0].message.content)
-  return result.choices[0].message.content;
+  if (!response.ok || result.error) {
+    const message = typeof result.error === "string" ? result.error : result.error?.message;
+    throw new Error(`AI request failed (HTTP ${response.status}): ${message || response.statusText}`);
+  }
+  const content = result.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) {
+    throw new Error("AI API returned no message content in choices[0]");
+  }
+  return content;
   } catch (error) {
-   console.log({error}) 
+   console.error("AI request failed:", error.message);
+   throw error;
   }
 }
 

@@ -6,12 +6,14 @@ const SEL = {
   //   'textarea[placeholder]',
   // ],
   textarea: [
+  '[data-chatgpt-composer] [contenteditable="true"][role="textbox"]',
   '#prompt-textarea',
   'div[contenteditable="true"]',
   'textarea[placeholder]',
 ],
   sendBtn: [
     'button[data-testid="send-button"]',
+    'button[aria-label="Send"]',
     'button[aria-label="Send prompt"]',
     'button[aria-label="Send message"]',
   ],
@@ -91,14 +93,62 @@ function setInputText(el, text) {
     setter.call(el, text);
     el.dispatchEvent(new Event('input', { bubbles: true }));
   } else {
-    el.innerHTML = '';
-    el.focus();
-    document.execCommand('selectAll', false, null);
-    document.execCommand('delete', false, null);
-    document.execCommand('insertText', false, text);
-    if (!el.innerText.trim()) {
-      el.innerText = text;
-      el.dispatchEvent(new InputEvent('input', { bubbles: true, data: text }));
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    if (!document.execCommand('insertText', false, text)) {
+      throw new Error('ChatGPT editor rejected text insertion. Keep the ChatGPT tab active and retry.');
+    }
+    el.dispatchEvent(new InputEvent('input', {
+      bubbles: true, inputType: 'insertText', data: text,
+    }));
+  }
+}
+
+async function waitForSendButton(editor) {
+  const started = Date.now();
+  while (Date.now() - started < 15_000) {
+    const currentEditor = findVisible(SEL.textarea);
+    const composer = currentEditor?.closest('form') || document;
+    const button = [...composer.querySelectorAll(SEL.sendBtn.join(','))]
+      .find(el => isVisible(el) && !el.disabled && el.getAttribute('aria-disabled') !== 'true');
+    if (button) return button;
+    await sleep(200);
+  }
+  const currentEditor = findVisible(SEL.textarea) || editor;
+  const composer = currentEditor.closest('form') || document;
+  const labels = [...composer.querySelectorAll('button')]
+    .map(button => button.getAttribute('aria-label')).filter(Boolean);
+  throw new Error(`Send button not ready after inserting ${currentEditor.innerText?.length || currentEditor.value?.length || 0} characters. Composer buttons: ${labels.join(', ')}`);
+}
+
+async function submitPrompt(button, prevCount) {
+  const submitted = () => {
+    const editor = findVisible(SEL.textarea);
+    const text = editor?.tagName === 'TEXTAREA' ? editor.value : editor?.innerText;
+    return (editor && !text.trim()) || findVisible(SEL.stopBtn) ||
+      getRealAssistantDivs().length > prevCount;
+  };
+  button.click();
+  try {
+    await waitFor(submitted, 3000);
+  } catch {
+    if (submitted()) return;
+    const editor = findVisible(SEL.textarea);
+    const form = editor?.closest('form');
+    const submitter = form && [...form.querySelectorAll(SEL.sendBtn.join(','))]
+      .find(el => isVisible(el) && !el.disabled && el.type === 'submit');
+    if (!submitter || submitter.getAttribute('aria-disabled') === 'true') {
+      throw new Error('Send was clicked but ChatGPT did not submit the prompt.');
+    }
+    console.log('[Bridge] click did not submit; submitting current composer form');
+    form.requestSubmit(submitter);
+    try {
+      await waitFor(submitted, 5000);
+    } catch {
+      throw new Error('ChatGPT did not acknowledge click or form submission.');
     }
   }
 }
@@ -112,8 +162,14 @@ async function startNewChat() {
 }
 
 function getRealAssistantDivs() {
-  return [...document.querySelectorAll('[data-message-author-role="assistant"]')]
+  const legacySelector = '[data-message-author-role="assistant"]';
+  return [...document.querySelectorAll(
+    `${legacySelector}, [data-markdown-text-style="assistant-message"]`
+  )]
     .filter(el => {
+      const legacyMessage = el.closest(legacySelector);
+      // Count a legacy wrapper and its markdown content as one message.
+      if (legacyMessage && legacyMessage !== el) return false;
       const id = el.getAttribute('data-message-id') || '';
       return !id.startsWith('request-placeholder-');
     });
@@ -583,16 +639,16 @@ async function handleChatRequest({ requestId, messages, tools, model }) {
   console.log('[Bridge] handleChatRequest start');
   await startNewChat();
   console.log('[Bridge] new chat done');
-  const textarea = await waitFor(() => $(SEL.textarea), 10_000);
+  const textarea = await waitFor(() => findVisible(SEL.textarea), 10_000);
   console.log('[Bridge] textarea found:', textarea.tagName, textarea.id || textarea.className.slice(0, 40));
   const text = formatMessages(messages, tools);
   setInputText(textarea, text);
   console.log('[Bridge] text set, waiting for send button');
-  const sendBtn = await waitFor(() => $(SEL.sendBtn), 5_000);
   await sleep(300);
+  const sendBtn = await waitForSendButton(textarea);
   const prevCount = getRealAssistantDivs().length;
   console.log('[Bridge] prevCount:', prevCount, '— clicking send');
-  sendBtn.click();
+  await submitPrompt(sendBtn, prevCount);
   console.log('[Bridge] send clicked, waiting for response');
   const expectJson = true;
   const response = await waitForResponse(600_000, prevCount, { requireJson: expectJson });
@@ -610,6 +666,7 @@ async function handleChatRequest({ requestId, messages, tools, model }) {
 const WS_URL = 'ws://localhost:4000/ws';
 let ws = null;
 let wsStatus = 'disconnected';
+let requestInProgress = false;
 
 function notifyStatus(status) {
   wsStatus = status;
@@ -631,11 +688,20 @@ function connectWS() {
 
     if (message.type !== 'CHAT_REQUEST') return;
 
+    if (requestInProgress) {
+      ws.send(JSON.stringify({ type: 'CHAT_RESPONSE', requestId: message.requestId,
+        error: 'ChatGPT bridge is busy with another request. Retry when it finishes.' }));
+      return;
+    }
+    requestInProgress = true;
     try {
       const result = await handleChatRequest(message);
       ws.send(JSON.stringify({ type: 'CHAT_RESPONSE', ...result }));
     } catch (err) {
+      console.error('[Bridge] request failed:', err.message);
       ws.send(JSON.stringify({ type: 'CHAT_RESPONSE', requestId: message.requestId, error: err.message }));
+    } finally {
+      requestInProgress = false;
     }
   };
 
@@ -656,4 +722,5 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
+console.log('[Bridge] content script loaded: assistant-markup-v4');
 connectWS();
